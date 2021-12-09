@@ -10,10 +10,8 @@ fi
 # Check if initial setup has run
 if [ "$(hostname -s)" != "flek3s" ]; then 
 	initial_setup_ran="true"
-	echo "[INFO] Initial setup already completed"
 else
 	initial_setup_ran="false"
-	echo "[INFO] Initial setup not completed"
 fi 
 
 if [ "$kubernetes_running" == "true" ]; then
