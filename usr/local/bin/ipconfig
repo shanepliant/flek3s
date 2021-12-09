@@ -1,0 +1,152 @@
+#!/bin/bash
+# Configure the IP for the eth0 interface on an Alpine Linux appliance
+
+
+validate_cidr()
+{
+	local ERROR=0
+	if [ $1 -lt 0 ] || [ $1 -gt 32 ]; then
+		ERROR=1
+	fi
+	return $ERROR
+}
+
+dhcp_enabled=$(cat /etc/network/interfaces | grep eth0 | grep dhcp > /dev/null 2>&1; echo $?)
+
+if [ $dhcp_enabled -ne 0 ]; then
+	dhcp_enabled="no"
+else
+	dhcp_enabled="yes"
+fi
+
+# Read and show the present configuration for that interface
+ADDR=`/sbin/ip address show dev eth0 | grep inet | grep -v inet6 | awk '{print $2}'`
+ADDRESS=$(echo $ADDR | cut -d '/' -f1)
+CIDR=$(echo $ADDR | cut -d '/' -f2)
+ROUTER=$(/sbin/ip route |grep default | awk '{print $3}')
+DNS1=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'|head -n 1)
+DNS2=$(cat /etc/resolv.conf | grep nameserver | awk '{print $2}'|tail -n 1)
+
+if [ "$1" == "--claim-static" ] && [ "$dhcp_enabled" == "yes" ]; then 
+	echo "Converting DHCP assigned address $ADDR to static configuration"
+	# Build the new IP address config
+        printf "auto lo\niface lo inet loopback\n\nauto eth0\niface eth0 inet static\n   address ${ADDRESS}/${CIDR}\n   gateway ${ROUTER}\n"> /etc/network/interfaces
+        # Build the new DNS config
+        # Save it to /etc/resolv.conf
+        printf "nameserver $DNS1\nnameserver $DNS2\n" > /etc/resolv.conf
+        nohup /etc/init.d/networking restart > /dev/null 2>&1 &
+	exit
+elif [ "$1" == "--claim-static" ] && [ "$dhcp_enabled" == "no" ]; then 
+	echo "WARNING: Address $ADDR is already static."
+	exit
+fi
+
+#clear
+echo -e
+echo "DHCP Enabled?       $dhcp_enabled";
+echo "Current IP:         $ADDRESS";
+echo "Current CIDR:       $CIDR";
+echo "Current Gateway:    $ROUTER";
+echo "Current DNS 1:      $DNS1";
+echo "Current DNS 2:      $DNS2";
+echo "";
+
+# Does the user want to make any changes?
+answer="X"
+while [ "$answer" != "y" ] && [ "$answer" != "n" ]; do 
+	echo "Would you like to change the IP configuration  (y/n)?"
+read -e answer; 
+done;
+
+if [ "$answer" == "n" ]; then 
+	echo "Exiting...";
+	sleep 1;
+	exit 0;
+else       	
+
+	# Does the user want to set a static or dynamic IP?
+	answer="X"
+	while [ "$answer" != "y" ] && [ "$answer" != "n" ]; do 
+		echo "Enable DHCP (y/n)?"
+	read -e answer; 
+	done;
+
+	if [ "$answer" == "y" ]; then 
+	## If dynamic, write the DHCP config and exit
+		echo "Enabling DHCP ...";
+		printf "auto lo\niface lo inet loopback\n\nauto eth0\niface eth0 inet dhcp\nhostname $(cat /etc/hostname)" > /etc/network/interfaces
+		nohup /etc/init.d/networking restart > /dev/null 2>&1 &
+
+	else
+	## If static, start a wizard to get the IP info, then write the static IP config file. 
+		# Get the new config info from the user, defaulting to old values
+
+		VALIDIP=1;
+		while [ ${VALIDIP} -ne 0 ]
+		do
+			echo "";
+			echo "Enter new IP (Press enter to use $ADDRESS):";
+			read -e NEWIP;
+			if [ "$NEWIP" == "" ] ; then NEWIP=$ADDRESS; fi
+			if /usr/local/bin/validate_ip "$NEWIP"; then echo "New IP is OK." && VALIDIP=0; else echo "IP address invalid, please enter a new one."; fi;
+		done;
+
+		VALIDCIDR=1;
+		while [ ${VALIDCIDR} -ne 0 ]
+		do
+			echo "";
+			echo "Enter new network CIDR, 1-30 (Press enter to use $CIDR):";
+			read -e NEWCIDR;
+			if [ "$NEWCIDR" == "" ] ; then NEWCIDR=$CIDR; fi;
+			if validate_cidr "$NEWCIDR"; then echo "New CIDR is OK." && VALIDCIDR=0; else echo "CIDR invalid, please enter a new one."; fi;
+		done;
+
+		VALIDGW=1;
+		while [ ${VALIDGW} -ne 0 ]; do
+			echo "";
+			echo "Enter new Gateway (Press enter to use $ROUTER):";
+			read -e NEWGATEWAY;
+			if [ "$NEWGATEWAY" == "" ] ; then NEWGATEWAY=$ROUTER; fi
+			if /usr/local/bin/validate_ip "$NEWGATEWAY"; then echo "New GW is OK." && VALIDGW=0; else echo "GW address invalid, please enter a new one."; fi;
+		done;
+
+		VALIDDNS=1;
+		while [ ${VALIDDNS} -ne 0 ]; do
+			echo "";
+			echo "Enter new DNS Server 1 IP address";
+			echo "(Press enter to use $DNS1)";
+			read -e NEWDNS1;
+			if [ "$NEWDNS1" == "" ]; then NEWDNS1=$DNS1; fi
+			if /usr/local/bin/validate_ip "$NEWDNS1"; then echo "New DNS 1 is OK." && VALIDDNS=0; else echo "DNS server 1 IP is invalid, please re-enter."; fi;
+		done;
+
+		VALIDDNS=1;
+		while [ ${VALIDDNS} -ne 0 ]; do
+			echo "";
+			echo "Enter new DNS Server 2 IP address";
+			echo "(Press enter to use $DNS2)";
+			read -e NEWDNS2;
+			if [ "$NEWDNS2" == "" ]; then NEWDNS2=$DNS2; fi
+			if /usr/local/bin/validate_ip "$NEWDNS2"; then echo "New DNS 2 is OK." && VALIDDNS=0; else echo "DNS server 2 IP is invalid, please re-enter."; fi;
+		done;
+
+		# Show the user what they're getting in to
+		clear
+		echo "CHANGING IP CONFIGURATION TO:";
+
+		echo "New IP:        $NEWIP";
+		echo "New Netmask:   $NEWCIDR";
+		echo "New Gateway:   $NEWGATEWAY";
+		echo "New DNS1:      $NEWDNS1";
+		echo "New DNS2:      $NEWDNS2";
+		echo ""
+		echo "Rebooting now to apply changes"
+		pause
+		# Build the new IP address config
+		printf "auto lo\niface lo inet loopback\n\nauto eth0\niface eth0 inet static\n   address ${NEWIP}/${NEWCIDR}\n   gateway ${NEWGATEWAY}\n"> /etc/network/interfaces
+		# Build the new DNS config
+		# Save it to /etc/resolv.conf
+		printf "nameserver $NEWDNS1\nnameserver $NEWDNS2\n" > /etc/resolv.conf
+		reboot
+	fi
+fi

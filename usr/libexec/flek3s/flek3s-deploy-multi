@@ -1,0 +1,556 @@
+#!/bin/bash
+
+longhorn_version=1.2.2
+run_dir=$(dirname "$BASH_SOURCE")
+echo "run_dir = $run_dir"
+upgrade="false"
+
+function sayerr() { echo "[ ERROR ]"; exit 1; }
+function sayok() { echo "[ OK ]"; }
+
+function validate_ip {
+        ERROR=0
+        oldIFS=$IFS
+        IFS=.
+        set -f
+        set -- $1
+        if [ $# -eq 4 ]; then
+                for seg; do
+                        case $seg in
+                            ""|*[!0-9]*) ERROR=1;break ;; ## Segment empty or non-numeric char
+                            *) [ $seg -gt 255 ] && ERROR=2 ;;
+                        esac
+                done
+        else
+                ERROR=3 ## Not 4 segments
+        fi
+        IFS=$oldIFS
+        set +f
+        echo $ERROR
+        if [[ "$ERROR" -gt 0 ]]; then
+                echo "$proxy_ip is not a valid IP address"
+        fi
+}
+
+PROGRAM=$(basename "$0");
+function usage {
+    echo "Usage: ./${PROGRAM} [PARAM-NAME PARAM-VALUE]"
+    echo "  PARAM-NAME:   PARAM-VALUE:  DESCRIPTION:"
+    echo "  --upgrade			Flag if performing an upgrade"
+}
+
+# Handle our switches
+while [[ ${1} ]]; do
+    case "${1}" in
+        --upgrade)
+            upgrade="true"
+            shift
+            ;;
+        *)
+            usage
+            exit 0
+    esac
+
+    if ! shift; then
+        echo 'Missing parameter argument.' >&2
+        exit 1
+    fi
+done
+
+# If this is an existing cluster, we should use the existing config, else get new info
+if [ "$upgrade" == "true" ]; then 
+	nodes_json=$(kubectl get nodes -o json | jq [.items[].metadata.annotations])
+	node0_ip=$(echo $nodes_json | jq -r '.[0] | with_entries(select(.key|match("public-ip";"i")))[]')
+	node1_ip=$(echo $nodes_json | jq -r '.[1] | with_entries(select(.key|match("public-ip";"i")))[]')
+	node2_ip=$(echo $nodes_json | jq -r '.[2] | with_entries(select(.key|match("public-ip";"i")))[]')
+
+else
+	# Get our connection information
+	for nodeid in 0 1 2; do 
+		valid=100
+		while [ "$valid" != "0" ]; do
+			read -p "IP Address for Node${nodeid}> " node_ip
+			valid=$(validate_ip $node_ip)
+			declare node${nodeid}_ip=$node_ip
+		done
+	done
+fi
+
+
+# Make sure we have a local SSH keypair
+echo ""
+if [ -f ".ssh/id_rsa" ] && [ -f ".ssh/id_rsa.pub" ]; then 
+	echo "--- Using existing SSH keypair found in .ssh/"
+else
+	echo ">>> Generating new SSH keypair"
+	ssh-keygen -t rsa -N '' -f ~/.ssh/id_rsa
+fi
+
+
+# Copy the public key to each host as an authorized_key
+# This will prompt the user to give a password for each node
+echo ">>> Make the other nodes trust this one"
+
+for nodeid in 0 1 2; do 
+	valid=100
+	while [ "$valid" != "0" ]; do
+		echo ""
+		read -p "Username for Node${nodeid} ($(eval echo \$node${nodeid}_ip)) SSH user> " node_user
+		ssh-keyscan -H $(eval echo \$node${nodeid}_ip) >> ~/.ssh/known_hosts 2>/dev/null
+		existing_trust=$( ssh -o PasswordAuthentication=no  -o BatchMode=yes ${node_user}@$(eval echo \$node${nodeid}_ip) exit &>/dev/null && echo true || echo false )
+		if [ "$existing_trust" == "true" ]; then 
+			echo "--- Public key already authorized on $(eval echo \$node${nodeid}_ip)"
+		else 
+			echo ">>> Adding public key to authorized_keys on $(eval echo \$node${nodeid}_ip)"
+			ssh ${node_user}@$(eval echo \$node${nodeid}_ip) "mkdir -p .ssh"
+			cat ~/.ssh/id_rsa.pub | ssh ${node_user}@$(eval echo \$node${nodeid}_ip) "tee -a .ssh/authorized_keys"
+		fi
+		valid=$?
+	done
+	declare node${nodeid}_user=$node_user
+	declare node${nodeid}_hostname=$(ssh ${node_user}@$(eval echo \$node${nodeid}_ip) "hostname -s")
+done
+
+echo ""
+# We should now be done with password prompts
+
+
+NodeIPList="\"${node0_ip}\",\"${node1_ip}\",\"${node2_ip}\""
+#node0_hostname=$(hostname -s)
+#node1_hostname=$(ssh ${node1_user}@${node1_ip} "hostname -s")
+#node2_hostname=$(ssh ${node2_user}@${node2_ip} "hostname -s")
+NodeHostnameList="${node0_hostname},${node1_hostname},${node2_hostname}"
+
+
+echo ""
+echo "Node IPs: $NodeIPList"
+echo "Node Hostnames: $NodeHostnameList"
+echo ""
+
+############
+#
+# The certificate section
+#
+############
+
+if [ "$upgrade" == "true" ]; then
+	echo "[ Notice ] Using existing certificates for etcd"
+else
+# !!! Indentations are left off below due to the heredocs
+
+echo ""
+echo  ">>> Create CA config files"
+
+cat > ca-config.json << EOF
+{
+   "signing": {
+       "default": {
+           "expiry": "43800h"
+       },
+       "profiles": {
+           "server": {
+               "expiry": "43800h",
+               "usages": [
+                   "signing",
+                   "key encipherment",
+                   "server auth"
+               ]
+           },
+           "client": {
+               "expiry": "43800h",
+               "usages": [
+                   "signing",
+                   "key encipherment",
+                   "client auth"
+               ]
+           },
+           "peer": {
+               "expiry": "43800h",
+               "usages": [
+                   "signing",
+                   "key encipherment",
+                   "server auth",
+                   "client auth"
+               ]
+           }
+       }
+   }
+}
+EOF
+
+cat > ca-csr.json << EOF2
+{
+    "CN": "Pliant.io temp CA",
+    "key": {
+        "algo": "rsa",
+        "size": 2048
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "CA",
+            "O": "Pliant.io",
+            "ST": "Delaware",
+            "OU": "Development",
+            "OU": "Testing"
+        }
+    ]
+}
+EOF2
+
+echo ""
+echo ">>> Initialize the CA"
+/usr/bin/cfssl gencert -initca ca-csr.json | /usr/bin/cfssljson -bare ca -  && sayok || sayerr
+
+echo ""
+echo ">>> Generate the server certificate"
+
+cat > server.json << EOF3
+{
+    "CN": "etcd-cluster",
+    "hosts": [
+        "domain-name",
+        ${NodeIPList},
+        "127.0.0.1"
+    ],
+    "key": {
+        "algo": "ecdsa",
+        "size": 256
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "CA",
+            "ST": "Delaware"
+        }
+    ]
+}
+EOF3
+
+/usr/bin/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=server server.json | /usr/bin/cfssljson -bare server  && sayok || sayerr
+
+
+echo ""
+echo ">>> Generate the client certificate"
+cat > client.json << EOF4
+{
+    "CN": "client",
+    "hosts": [""],
+    "key": {
+        "algo": "ecdsa",
+        "size": 256
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "CA",
+            "ST": "Delaware"
+        }
+    ]
+}
+EOF4
+
+/usr/bin/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=client client.json | /usr/bin/cfssljson -bare client  && sayok || sayerr
+
+echo ""
+echo ">>> Generate node certificates"
+
+for node in $(echo $NodeHostnameList | sed -e 's/,/ /g'); do 
+	echo""
+	echo ">>> Generate cert for $node"
+	cat > ${node}.json << EOF5
+{
+    "CN": "${node}",
+    "hosts": [
+      "${node}",
+      "${node}.local",
+      ${NodeIPList},
+      "127.0.0.1"
+    ],
+    "key": {
+        "algo": "ecdsa",
+        "size": 256
+    },
+    "names": [
+        {
+            "C": "US",
+            "L": "CA",
+            "ST": "Delaware"
+        }
+    ]
+}
+EOF5
+
+	/usr/bin/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=peer ${node}.json | /usr/bin/cfssljson -bare ${node}  && sayok || sayerr
+done
+
+fi
+
+############
+#
+# ETCD Installation 
+#
+############
+
+
+cluster="${node0_hostname}=https://${node0_ip}:2380,${node1_hostname}=https://${node1_ip}:2380,${node2_hostname}=https://${node2_ip}:2380"
+endpoints="https://${node0_ip}:2379,https://${node1_ip}:2379,https://${node2_ip}:2379"
+
+echo""
+echo "+++ ETCD Cluster: $cluster"
+echo "+++ ETCD Endpoints: $endpoints"
+echo""
+
+
+for nodeid in 0 1 2; do 
+	ip=$(eval echo \$node${nodeid}_ip)
+	hname=$(eval echo \$node${nodeid}_hostname)
+	user=$(eval echo \$node${nodeid}_user)
+	if [ "$upgrade" != "true" ]; then
+		echo ""	
+		echo ">>> Deploying PKI to $hname / $ip"
+		
+		ssh ${user}@${ip} 'mkdir -p ~/certs'
+		scp ca.pem ${user}@${ip}:certs/
+		scp server.pem ${user}@${ip}:certs/
+		scp client.pem ${user}@${ip}:certs/
+		scp server-key.pem ${user}@${ip}:certs/
+		scp client-key.pem ${user}@${ip}:certs/
+		scp ${hname}.pem ${user}@${ip}:certs/
+		scp ${hname}-key.pem ${user}@${ip}:certs/
+		ssh ${user}@${ip} sudo mkdir -p /var/lib/etcd/cfssl/ && sayok || sayerr
+		ssh ${user}@${ip} sudo mv certs/* /var/lib/etcd/cfssl/ && sayok || sayerr
+		ssh ${user}@${ip} sudo chmod -R 666 /var/lib/etcd/cfssl && sayok || sayerr
+		ssh ${user}@${ip} sudo chmod +x /var/lib/etcd/cfssl && sayok || sayerr
+	fi
+
+	cat > etcd.conf.yml << EOF11
+# This is the configuration file for the etcd server.
+
+# Human-readable name for this member.
+name: '${hname}'
+
+# Path to the data directory.
+data-dir: /var/lib/etcd
+
+# Path to the dedicated wal directory.
+wal-dir:
+
+# Number of committed transactions to trigger a snapshot to disk.
+snapshot-count: 10000
+
+# Time (in milliseconds) of a heartbeat interval.
+heartbeat-interval: 100
+
+# Time (in milliseconds) for an election to timeout.
+election-timeout: 1000
+
+# Raise alarms when backend size exceeds the given quota. 0 means use the
+# default quota.
+quota-backend-bytes: 0
+
+# List of comma separated URLs to listen on for peer traffic.
+listen-peer-urls: https://${ip}:2380
+
+# List of comma separated URLs to listen on for client traffic.
+listen-client-urls: https://${ip}:2379,https://127.0.0.1:2379
+
+# Maximum number of snapshot files to retain (0 is unlimited).
+max-snapshots: 5
+
+# Maximum number of wal files to retain (0 is unlimited).
+max-wals: 5
+
+# Comma-separated white list of origins for CORS (cross-origin resource sharing).
+cors:
+
+# List of this member's peer URLs to advertise to the rest of the cluster.
+# The URLs needed to be a comma-separated list.
+initial-advertise-peer-urls: https://${ip}:2380
+
+# List of this member's client URLs to advertise to the public.
+# The URLs needed to be a comma-separated list.
+advertise-client-urls: https://${ip}:2379
+
+# Discovery URL used to bootstrap the cluster.
+discovery:
+
+# Valid values include 'exit', 'proxy'
+discovery-fallback: 'proxy'
+
+# HTTP proxy to use for traffic to discovery service.
+discovery-proxy:
+
+# DNS domain used to bootstrap initial cluster.
+discovery-srv:
+
+# Initial cluster configuration for bootstrapping.
+initial-cluster: ${cluster}
+
+# Initial cluster token for the etcd cluster during bootstrap.
+initial-cluster-token: 'etcd-cluster-1'
+
+# Initial cluster state ('new' or 'existing').
+initial-cluster-state: 'new'
+
+# Reject reconfiguration requests that would cause quorum loss.
+strict-reconfig-check: false
+
+# Accept etcd V2 client requests
+enable-v2: true
+
+# Enable runtime profiling data via HTTP server
+enable-pprof: true
+
+# Valid values include 'on', 'readonly', 'off'
+proxy: 'off'
+
+# Time (in milliseconds) an endpoint will be held in a failed state.
+proxy-failure-wait: 5000
+
+# Time (in milliseconds) of the endpoints refresh interval.
+proxy-refresh-interval: 30000
+
+# Time (in milliseconds) for a dial to timeout.
+proxy-dial-timeout: 1000
+
+# Time (in milliseconds) for a write to timeout.
+proxy-write-timeout: 5000
+
+# Time (in milliseconds) for a read to timeout.
+proxy-read-timeout: 0
+
+client-transport-security:
+  # Path to the client server TLS cert file.
+  cert-file: /var/lib/etcd/cfssl/server.pem
+
+  # Path to the client server TLS key file.
+  key-file: /var/lib/etcd/cfssl/server-key.pem
+
+  # Enable client cert authentication.
+  client-cert-auth: true
+
+  # Path to the client server TLS trusted CA cert file.
+  trusted-ca-file: /var/lib/etcd/cfssl/ca.pem
+
+  # Client TLS using generated certificates
+  auto-tls: false
+
+peer-transport-security:
+  # Path to the peer server TLS cert file.
+  cert-file: /var/lib/etcd/cfssl/${hname}.pem
+
+  # Path to the peer server TLS key file.
+  key-file: /var/lib/etcd/cfssl/${hname}-key.pem
+
+  # Enable peer client cert authentication.
+  client-cert-auth: true
+
+  # Path to the peer server TLS trusted CA cert file.
+  trusted-ca-file: /var/lib/etcd/cfssl/ca.pem
+
+  # Peer TLS using generated certificates.
+  auto-tls: false
+
+# Enable debug-level logging for etcd.
+debug: false
+
+logger: zap
+
+# Specify 'stdout' or 'stderr' to skip journald logging even when running under systemd.
+log-outputs: [stderr]
+
+# Force to create a new one member cluster.
+force-new-cluster: false
+
+auto-compaction-mode: periodic
+auto-compaction-retention: "1"
+EOF11
+		scp etcd.conf.yml ${user}@${ip}:
+		ssh ${user}@${ip} sudo mv etcd.conf.yml /etc/etcd/conf.yml && sayok || sayerr
+		ssh ${user}@${ip} sudo chown -R etcd:etcd /var/lib/etcd/ && sayok || sayerr
+		ssh ${user}@${ip} sudo rc-update add etcd default && sayok || sayerr
+		ssh ${user}@${ip} sudo /etc/init.d/etcd start && sayok || sayerr
+		echo "sudo /usr/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem member list" | ssh ${user}@${ip} sudo tee /usr/local/bin/etcd-members
+		echo "sudo /usr/bin/etcdctl --endpoints ${endpoints}  --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem endpoint health" | ssh ${user}@${ip} sudo tee /usr/local/bin/etcd-health
+done
+
+echo""
+echo ">>> Waiting 30 seconds for etcd cluster to initialize..."
+sleep 30
+
+echo ""
+echo ">>> Checking ETCD Cluster Members"
+sudo /usr/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem member list && sayok || sayerr
+
+echo ""
+echo ">>> Checking ETCD Cluster Health"
+sudo /usr/bin/etcdctl --endpoints ${endpoints}  --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem endpoint health && sayok || sayerr
+echo ""
+
+############
+#
+#   K3s Installation 
+#
+############
+
+if [ "$upgrade" == "true" ]; then 
+	for nodeid in 0 1 2; do 
+		ip=$(eval echo \$node${nodeid}_ip)
+		hname=$(eval echo \$node${nodeid}_hostname)
+		user=$(eval echo \$node${nodeid}_user)
+		echo ""
+		echo ">>> Upgrading K3s on $hname / $ip"
+		ssh ${user}@${ip} sudo /usr/local/bin/k3s-redeploy  && sayok || sayerr
+	done
+
+else
+	for nodeid in 0 1 2; do 
+		ip=$(eval echo \$node${nodeid}_ip)
+		hname=$(eval echo \$node${nodeid}_hostname)
+		user=$(eval echo \$node${nodeid}_user)
+		echo ""
+		echo ">>> Deploying K3s to $hname / $ip"
+		echo "curl -sfL https://get.k3s.io | sudo sh -s - --write-kubeconfig-mode 644 --no-deploy traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem --token=aefw45k8g67w45876" | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
+		ssh ${user}@${ip} sudo chmod u+x /usr/local/bin/k3s-redeploy
+		ssh ${user}@${ip} sudo /usr/local/bin/k3s-redeploy  && sayok || sayerr
+	done
+fi
+echo ""
+echo ">>> Waiting 30 seconds for all K3s nodes to be available"
+sleep 30
+
+echo ""
+echo ">>> Checking node list in K3s cluster"
+/usr/local/bin/kubectl get nodes
+echo ""
+
+
+############
+#
+#   Longhorn Installation 
+#
+############
+
+echo ""
+echo ">>> Deploying Longhorn on cluster"
+/usr/local/bin/kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
+sleep 60
+
+echo ""
+echo ">>> Setting Longhorn as default storage class"
+/usr/local/bin/kubectl patch storageclass longhorn -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'  && sayok || sayerr
+/usr/local/bin/kubectl patch storageclass local-path -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"false"}}}'  && sayok || sayerr
+
+echo "" 
+echo ">>> Check default storage class"
+/usr/local/bin/kubectl get storageclass
+
+echo ""
+if [ "$upgrade" == "true" ]; then 
+	echo "End of K3s 3 Node Upgrade"
+else
+	echo "End of K3s 3 Node Installation"
+fi
+echo ""
+

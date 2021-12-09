@@ -1,0 +1,85 @@
+#!/bin/bash
+
+# Bash 0 == yes, 1 == no
+
+function bashtranslate() {
+        if [ $1 == 0 ]; then
+                echo "yes"
+        elif [ $1 == 1 ]; then
+                echo "no"
+        else
+                echo "ERROR"
+                exit 1
+        fi
+}
+# Read and display current state of SSH Daemon
+
+ntp_default=`bashtranslate $(cat /etc/chrony/chrony.conf | head -n 1| grep 'default config' >/dev/null 2>&1; echo $?)`
+
+
+echo ""
+if [ "$ntp_default" == "yes" ]; then 
+	echo "NTP configured for default pool at pool.ntp.org"
+else
+	NTP1=$(grep server /etc/chrony/chrony.conf | awk '{print $2}' | head -n 1) 
+	NTP2=$(grep server /etc/chrony/chrony.conf | awk '{print $2}' | tail -n 1) 
+	echo "NTP Server 1: $NTP1"
+	echo "NTP Server 2: $NTP2"
+fi
+echo""
+
+# Ask if changes wanted
+# Does the user want to make any changes?
+answer="X"
+while [ "$answer" != "y" ] && [ "$answer" != "n" ]; do
+        echo ">>> Would you like to change the NTP configuration (y/n)?"
+read -e answer;
+done;
+
+if [ "$answer" == "n" ]; then
+        echo "Exiting...";
+        sleep 1;
+        exit 0;
+else
+        # Does the user want to use the default pool?
+        answer="X"
+        while [ "$answer" != "y" ] && [ "$answer" != "n" ]; do
+                echo "Configure NTP to use default public pool: pool.ntp.org (y/n)?"
+        read -e answer;
+        done;
+
+        if [ "$answer" == "y" ]; then
+        ## Write the default config, restart chrony, and exit
+                echo "Enabling default NTP config...";
+                printf "# default config\n\npool pool.ntp.org iburst\ninitstepslew 10 pool.ntp.org\ndriftfile /var/lib/chrony/chrony.drift\nrtcsync\ncmdport 0\n" > /etc/chrony/chrony.conf
+                /etc/init.d/chronyd restart
+        else        
+                VALIDIP=1;
+                while [ ${VALIDIP} -ne 0 ]
+                do
+                        echo "";
+                        echo "Enter new NTP1 IP (Press enter to use $NTP1):";
+                        read -e NEWNTP1;
+                        if [ "$NEWNTP1" == "" ] ; then NEWNTP1=$NTP1; fi
+                        if validate_ip "$NEWNTP1"; then echo "New NTP1 IP is OK." && VALIDIP=0; else echo "IP for NTP1 is invalid, please enter a new one."; fi;
+                done;
+
+                VALIDIP=1;
+                while [ ${VALIDIP} -ne 0 ]
+                do
+                        echo "";
+                        echo "Enter new NTP2 IP (Press enter to use $NTP2):";
+                        read -e NEWNTP2;
+                        if [ "$NEWNTP2" == "" ] ; then NEWNTP2=$NTP2; fi
+                        if validate_ip "$NEWNTP2"; then echo "New NTP2 IP is OK." && VALIDIP=0; else echo "IP for NTP2 is invalid, please enter a new one."; fi;
+                done;
+		
+		echo ""
+		echo "Setting NTP to use these servers:"
+		echo "  NTP1: $NEWNTP1"
+		echo "  NTP2: $NEWNTP2"
+		echo ""
+                printf "# custom config\n\nserver $NEWNTP1 iburst\nserver $NEWNTP2 iburst\ninitstepslew 1 $NEWNTP1 $NEWNTP2 \ndriftfile /var/lib/chrony/chrony.drift\nrtcsync\ncmdport 0\n" > /etc/chrony/chrony.conf
+                /etc/init.d/chronyd restart
+	fi
+fi

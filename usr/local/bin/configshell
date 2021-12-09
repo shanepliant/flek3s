@@ -1,0 +1,184 @@
+#!/bin/bash
+
+# Check if the K3s init script is present, this would indicate that K3s is installed
+if [ -f /etc/init.d/k3s ]; then 
+	kubernetes_running="true"
+else
+	kubernetes_running="false"
+fi
+
+# Check if initial setup has run
+if [ "$(hostname -s)" != "flek3s" ]; then 
+	initial_setup_ran="true"
+	echo "[INFO] Initial setup already completed"
+else
+	initial_setup_ran="false"
+	echo "[INFO] Initial setup not completed"
+fi 
+
+if [ "$kubernetes_running" == "true" ]; then
+	# Show the Kubernetes Installed and Running menu
+	clear
+	echo ""
+	echo "Welcome to fleK3s Appliance Kubernetes"
+	echo "Kubernetes is installed and running"
+	while [ 1 ]; do 
+		echo ""
+		echo "Enter one of the following commands and press enter:"
+		echo "  ipconfig          - Configure Network"
+		echo "  ntpconfig         - Configure Network Time Protocol Servers"
+		echo "  sshconfig         - Enable/Disable SSH Daemon"
+		echo "  passwd            - Change k3config password"
+		echo "  bash              - Open a BASH command shell as root"
+		echo "  logoff"
+		echo "  reboot"
+		echo "  shutdown"
+		echo ""
+		read -p "> " choice
+
+		case "$choice" in
+
+		"ipconfig")
+			clear
+			sudo /usr/local/bin/ipconfig
+			clear
+			;;
+		"ntpconfig")
+			clear
+			sudo /usr/local/bin/ntpconfig
+			clear
+			;;
+		"sshconfig")
+			clear
+			sudo /usr/local/bin/sshconfig
+			clear
+			;;
+		"passwd")
+			clear
+			passwd
+			clear
+			;;
+		"logoff"|"exit"|"quit")
+			clear
+			exit 0
+			;;
+		"reboot")
+			sudo /sbin/reboot
+			;;
+		"shutdown")
+			sudo /sbin/poweroff
+			;;
+		"bash")
+			sudo su - root
+			;;
+		*)
+			clear
+			echo ""
+			echo "\"${choice}\" is not a valid entry"
+			echo ""
+			;;
+		esac
+	done
+elif [ "$initial_setup_ran" == "true" ] && [ "$kubernetes_running" == "false" ]; then
+# Run Kubernetes setup
+	echo ""
+	echo "Initial setup completed."
+	echo ""
+	run_setup=wat
+	while [ "$run_setup" != "y" ] && [ "$run_setup" != "n" ]; do 
+		echo "Would you like to run Kubernetes setup now? (y/n)" 
+		read -e run_setup
+	done
+	if [ "$run_setup" == "y" ]; then 
+		echo "Starting K3s Kubernetes setup process"
+		echo ""
+		/usr/local/bin/flek3s-setup
+	fi
+
+else
+# Run initial setup
+	echo ""
+	echo "Initial setup must be completed before Kubernetes setup can begin"
+	echo ""
+	run_setup=wat
+	while [ "$run_setup" != "y" ] && [ "$run_setup" != "n" ]; do 
+		echo 'Would you like to run initial setup now (y/n)?'
+		read -e run_setup
+	done
+	if [ "$run_setup" == "y" ]; then 
+		echo "Starting initial setup process"
+		echo ""
+		sudo /usr/local/bin/initial-setup
+	fi
+fi
+
+
+# Show the default menu
+clear
+echo ""
+echo "Welcome to fleK3s Appliance Kubernetes"
+echo "Use these options at your own risk"
+while [ 1 ]; do 
+echo ""
+echo "Enter one of the following commands and press enter:"
+echo "  initialize        - Run initial setup"
+echo "  ipconfig          - Configure Network"
+echo "  ntpconfig         - Configure Network Time Protocol Servers"
+echo "  sshconfig         - Enable/Disable SSH Daemon"
+echo "  passwd            - Change k3config password"
+echo "  bash              - Open a BASH command shell as root"
+echo "  logoff"
+echo "  reboot"
+echo "  shutdown"
+echo ""
+read -p "> " choice
+
+case "$choice" in
+
+"initialize")
+	clear
+	sudo /usr/local/bin/initial-setup
+	clear
+	;;
+"ipconfig")
+	clear
+	sudo /usr/local/bin/ipconfig
+	clear
+	;;
+"ntpconfig")
+	clear
+	sudo /usr/local/bin/ntpconfig
+	clear
+	;;
+"sshconfig")
+	clear
+	sudo /usr/local/bin/sshconfig
+	clear
+	;;
+"passwd")
+	clear
+	passwd
+	clear
+	;;
+"logoff"|"exit"|"quit")
+	clear
+	exit 0
+	;;
+"reboot")
+	sudo /sbin/reboot
+	;;
+"shutdown")
+	sudo /sbin/poweroff
+	;;
+"bash")
+	sudo su - root
+	;;
+*)
+	clear
+	echo ""
+	echo "\"${choice}\" is not a valid entry"
+	echo ""
+	;;
+esac
+
+done

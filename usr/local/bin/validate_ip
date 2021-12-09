@@ -1,0 +1,21 @@
+#!/bin/bash
+# Script to validate an IP address
+
+ERROR=0
+oldIFS=$IFS
+IFS=.
+set -f
+set -- $1
+if [ $# -eq 4 ]; then
+	for seg; do
+		case $seg in
+		    ""|*[!0-9]*) ERROR=1;break ;; ## Segment empty or non-numeric char
+		    *) [ $seg -gt 255 ] && ERROR=2 ;;
+		esac
+	done
+else
+	ERROR=3 ## Not 4 segments
+fi
+IFS=$oldIFS
+set +f
+exit $ERROR

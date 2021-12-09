@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# Bash 0 == yes, 1 == no
+
+function bashtranslate() {
+        if [ $1 == 0 ]; then
+                echo "yes"
+        elif [ $1 == 1 ]; then
+                echo "no"
+        else
+                echo "ERROR"
+                exit 1
+        fi
+}
+# Read and display current state of SSH Daemon
+
+ssh_enabled=`bashtranslate $(rc-status default |grep sshd > /dev/null 2>&1; echo $?)`
+ssh_running=`bashtranslate $(rc-status | grep sshd | grep started > /dev/null 2>&1; echo $?)`
+
+echo ""
+echo "	SSHD Enabled: $ssh_enabled"
+echo "	SSHD Running: $ssh_running"
+echo ""
+
+# Ask if changes wanted
+# Does the user want to make any changes?
+answer="X"
+while [ "$answer" != "y" ] && [ "$answer" != "n" ]; do
+	echo "Warning: setting change will take effect immediately! Choose 'n' to exit."	
+        echo ">>> Would you like to toggle SSHD (y/n)?"
+read -e answer;
+done;
+
+if [ "$answer" == "n" ]; then
+        echo "Exiting...";
+        sleep 1;
+        exit 0;
+else
+        if [ "$ssh_enabled" == "yes" ]; then
+		echo "Disabling SSHD..."
+		rc-update del sshd
+		echo "Stopping SSHD..."
+		/etc/init.d/sshd stop
+        else
+                echo "Enabling SSHD...";
+		rc-update add sshd default
+                echo "Starting SSHD...";
+		/etc/init.d/sshd start
+	fi
+fi

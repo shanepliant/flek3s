@@ -1,0 +1,128 @@
+#!/bin/bash
+
+run_dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+required_tools="jq wget curl"
+k3s_delay=10
+
+function sayerror() { echo "[ ERROR ]"; exit 1; }
+
+function sayok() { echo "[ OK ]"; }
+
+function wait() {
+	ctr=$1
+	echo "Waiting for $ctr minutes..."
+	while [ $ctr -ne 0 ]; do
+		sleep 60;	
+		ctr=$(expr $ctr - 1)
+		if [ $ctr -eq 0 ]; then
+			echo "Done waiting"
+		else
+			echo "$ctr minutes to go..."
+		fi
+	done
+}
+
+function countdown() {
+      	ctr=$1 
+        while [ $ctr -ne 0 ]; do
+        	echo "$ctr"
+        	sleep 1
+		ctr=$(expr $ctr - 1)
+        done
+}
+
+function check4tool() {
+	which $1 >> /dev/null 2>&1
+	if [ $? -eq 0 ]; then 
+		echo "[ OK ] We have $1"
+	else
+		echo "[ ERROR ] Could not find $1 in the path. Please install $1 and try again."
+		exit 1
+	fi
+}
+
+##############################
+#
+#  Pre checks
+#
+##############################
+
+
+# Do we have the tools we need?
+for tool in $required_tools; do
+	check4tool $tool
+done
+
+# Can we sudo?
+sudo -n true
+if [ $? -ne 0 ]; then 
+	echo "[ ERROR ] sudo without password capability required for this user to proceed"
+	exit 1
+fi
+
+
+# Determine the present state. Is K3s installed? Single or multi node?
+k3s_installed=-1
+k3s_nodes=-1
+current_ver="N/A"
+
+# k3s check
+k3s --version >/dev/null 2>&1 && k3s_installed=1 || k3s_installed=0
+if [ $k3s_installed -eq 1 ]; then 
+	echo "[ INFO ] K3s install detected"
+	# How many nodes?
+	k3s_nodes=$(kubectl get nodes |tail -n +2 | wc -l)
+	if [ "$k3s_nodes" == "1" ] || [ "$k3s_nodes" == "3" ]; then 
+		echo "[ INFO ] $k3s_nodes K3s nodes detected"
+	else
+		echo "[ ERROR ] $k3s_nodes K3s nodes detected. Supported clusters have 1 or 3 nodes."
+		exit 1
+	fi
+else
+	k3s_installed=0
+	echo "[ INFO ] K3s not installed"
+fi
+
+##############################
+#
+# Do the  things
+#
+##############################
+
+
+# Upgrade or Install?
+if [ $k3s_installed -eq 1 ]; then 
+	# We will be upgrading
+	echo "[ INFO ] We will be performing an upgrade in"
+	countdown 10
+	if [ $k3s_nodes -eq 1 ]; then 
+		echo "Upgrading single K3s node..."
+		curl -sfL https://get.k3s.io | sudo sh -s - --write-kubeconfig-mode 644 --no-deploy traefik && sayok || sayerror
+		echo "Restarting K3s..."
+		sudo /etc/init.d/k3s restart
+	elif [ $k3s_nodes -gt 1 ]; then
+		echo "[ INFO ] Upgrading multi-node cluster"
+		sudo /usr/local/bin/k3s-deploy-multi --upgrade true && sayok || sayerror
+	else
+		echo "[ ERROR ] Unsupported cluster detected. Has $k3s_nodes nodes."
+		exit 1
+	fi
+else
+	echo "[ INFO ] We will be performing an installation"
+	# We will be doing an install
+	echo "Installing K3s..."
+	# How many nodes? Pick 1 or 3
+	newnodes=-1
+	while [ $newnodes -ne 1 ] && [ $newnodes -ne 3 ]; do
+		read -p "How many nodes will be in this cluster, 1 or 3?" newnodes
+	done
+	if [ $newnodes -eq 1 ]; then 
+	# if one node, install single node K3s
+		echo "Installing single K3s node..."
+		curl -sfL https://get.k3s.io | sudo sh -s - --write-kubeconfig-mode 644 --no-deploy traefik && sayok || sayerror
+	elif [ $newnodes -eq 3 ]; then 
+	# if 3 node, install 3 node K3s
+		echo "Installing multi node K3s..."
+		sudo /usr/local/bin/k3s-deploy-multi && sayok || sayerror
+	fi
+fi

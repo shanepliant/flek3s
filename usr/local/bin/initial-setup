@@ -1,0 +1,25 @@
+#!/bin/bash
+
+# Set the peering code / peer user password
+passwd peer
+
+# Set the setup user password
+passwd setup
+
+# Set the hostname
+hn_valid=0
+while [ $hn_valid == 0 ]; do
+	echo "Enter a new hostname for this node. You may wish to make the node number part of the name."
+	echo ""
+	read -p "Hostname: " hn
+	hn_valid=$(validate_hostname $hn)
+	if [ $hn_valid == 1 ]; then
+		echo "Setting hostname to $hn"
+		echo $hn > /etc/hostname
+	then 
+		echo "Invalid hostname $hn"
+	fi
+done
+
+# Set the static IP
+/usr/local/bin/ipconfig
