@@ -12,7 +12,7 @@ script_dir=$(dirname "$BASH_SOURCE")
 echo "Script dir: $script_dir"
 cd ${script_dir}
 for folder in etc usr; do
-	echo cp $folder /
+	echo cp -r $folder /
 done
 
 # Packages:
