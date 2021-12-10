@@ -1,4 +1,4 @@
-peer ALL=(ALL) NOPASSWD: /usr/local/bin/
+peer ALL=(ALL) NOPASSWD: ALL
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/ipconfig
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/sshconfig
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/ntpconfig

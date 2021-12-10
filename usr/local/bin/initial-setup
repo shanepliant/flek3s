@@ -25,3 +25,12 @@ done
 
 # Set the static IP
 /usr/local/bin/ipconfig
+
+cp /etc/issue.base /etc/issue
+echo "" >> /etc/issue
+echo "Ready to run Kubernetes setup." >> /etc/issue
+echo "You only need to run the setup process from one node." >> /etc/issue
+echo "Log in as 'setup' with your password set during initial-setup" >> /etc/issue
+echo ""
+
+sudo reboot

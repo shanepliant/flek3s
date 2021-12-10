@@ -100,11 +100,11 @@ echo "New Gateway:   $NEWGATEWAY";
 echo "New DNS1:      $NEWDNS1";
 echo "New DNS2:      $NEWDNS2";
 echo ""
-echo "Rebooting now to apply changes"
+echo "You MUST reboot to apply changes!"
 pause
 # Build the new IP address config
 printf "auto lo\niface lo inet loopback\n\nauto eth0\niface eth0 inet static\n   address ${NEWIP}/${NEWCIDR}\n   gateway ${NEWGATEWAY}\n"> /etc/network/interfaces
 # Build the new DNS config
 # Save it to /etc/resolv.conf
 printf "nameserver $NEWDNS1\nnameserver $NEWDNS2\n" > /etc/resolv.conf
-reboot
+
