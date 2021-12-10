@@ -14,7 +14,7 @@ while [ $hn_valid == 0 ]; do
 	echo "Enter a new hostname for this node. You may wish to make the node number part of the name."
 	echo ""
 	read -p "Hostname: " hn
-	hn_valid=$(validate_hostname $hn)
+	hn_valid=$( [ "$hn" == "flek3s" ] && echo 0 || echo 1 )
 	if [ $hn_valid == 1 ]; then
 		echo "Setting hostname to $hn"
 		echo $hn > /etc/hostname

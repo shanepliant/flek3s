@@ -95,7 +95,8 @@ for nodeid in 0 1 2; do
 	valid=100
 	while [ "$valid" != "0" ]; do
 		echo ""
-		read -p "Username for Node${nodeid} ($(eval echo \$node${nodeid}_ip)) SSH user> " node_user
+#		read -p "Username for Node${nodeid} ($(eval echo \$node${nodeid}_ip)) SSH user> " node_user
+		node_user=peer
 		ssh-keyscan -H $(eval echo \$node${nodeid}_ip) >> ~/.ssh/known_hosts 2>/dev/null
 		existing_trust=$( ssh -o PasswordAuthentication=no  -o BatchMode=yes ${node_user}@$(eval echo \$node${nodeid}_ip) exit &>/dev/null && echo true || echo false )
 		if [ "$existing_trust" == "true" ]; then 
