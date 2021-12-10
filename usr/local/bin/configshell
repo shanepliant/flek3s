@@ -28,7 +28,7 @@ if [ "$kubernetes_running" == "true" ]; then
 		echo "  sshconfig         - Enable/Disable SSH Daemon"
 		echo "  passwd            - Change k3config password"
 		echo "  bash              - Open a BASH command shell as root"
-		echo "  logoff"
+		echo "  logout"
 		echo "  reboot"
 		echo "  shutdown"
 		echo ""
@@ -56,7 +56,7 @@ if [ "$kubernetes_running" == "true" ]; then
 			passwd
 			clear
 			;;
-		"logoff"|"exit"|"quit")
+		"logout"|"exit"|"quit"|"logoff"|"logo")
 			clear
 			exit 0
 			;;
@@ -125,7 +125,7 @@ echo "  ntpconfig         - Configure Network Time Protocol Servers"
 echo "  sshconfig         - Enable/Disable SSH Daemon"
 echo "  passwd            - Change k3config password"
 echo "  bash              - Open a BASH command shell as root"
-echo "  logoff"
+echo "  logout"
 echo "  reboot"
 echo "  shutdown"
 echo ""
@@ -158,7 +158,7 @@ case "$choice" in
 	passwd
 	clear
 	;;
-"logoff"|"exit"|"quit")
+"logout"|"exit"|"quit"|"logoff"|"logo")
 	clear
 	exit 0
 	;;

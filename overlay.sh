@@ -25,10 +25,15 @@ rc-update add local boot
 
 # User accounts: 
 # setup / changeme is the default user, launches to configshell 
-adduser -s /usr/local/bin/configshell setup
+getent passwd setup > /dev/null 2>&1
+if [ $? -ne 0 ]; then 
+	adduser -s /usr/local/bin/configshell setup
+fi
 # peer / [user settable] is the peering user (used for cluster setup operations)
-adduser -s /bin/bash peer
-
+getent passwd peer > /dev/null 2>&1
+if [ $? -ne 0 ]; then 
+	useradd -s /bin/bash peer
+fi
 
 # File permissions: 
 # should be root:root 700 unless specified here
@@ -40,4 +45,9 @@ chown setup:root configshell
 chmod +x pause validate_ip mask2cidr cidr2mask
 cd -
 
-
+# Set up initial message in etc/issue
+cp /etc/issue.base /etc/issue
+echo "Log in to run initial setup" >> /etc/issue
+echo "Default user: setup" >> /etc/issue
+echo "Default password: changeme" >> /etc/issue
+echo "" >> /etc/issue

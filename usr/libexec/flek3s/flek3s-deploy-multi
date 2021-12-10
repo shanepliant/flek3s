@@ -117,9 +117,9 @@ echo ""
 
 
 NodeIPList="\"${node0_ip}\",\"${node1_ip}\",\"${node2_ip}\""
-#node0_hostname=$(hostname -s)
-#node1_hostname=$(ssh ${node1_user}@${node1_ip} "hostname -s")
-#node2_hostname=$(ssh ${node2_user}@${node2_ip} "hostname -s")
+node0_hostname=$(ssh ${node0_user}@${node0_ip} "hostname -s")
+node1_hostname=$(ssh ${node1_user}@${node1_ip} "hostname -s")
+node2_hostname=$(ssh ${node2_user}@${node2_ip} "hostname -s")
 NodeHostnameList="${node0_hostname},${node1_hostname},${node2_hostname}"
 
 
