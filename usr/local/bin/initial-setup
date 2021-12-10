@@ -1,9 +1,11 @@
 #!/bin/bash
 
 # Set the peering code / peer user password
+echo "Enter a new password to use when connecting to this node to build the Kubernetes cluster."
 passwd peer
 
 # Set the setup user password
+echo "Set a new password for the 'setup' user on this VM"
 passwd setup
 
 # Set the hostname
@@ -16,7 +18,7 @@ while [ $hn_valid == 0 ]; do
 	if [ $hn_valid == 1 ]; then
 		echo "Setting hostname to $hn"
 		echo $hn > /etc/hostname
-	then 
+	else 
 		echo "Invalid hostname $hn"
 	fi
 done
