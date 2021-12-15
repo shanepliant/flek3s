@@ -70,4 +70,5 @@ BIN_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s
 curl -o /usr/libexec/k3s/k3s -sfL $BIN_URL 
 chmod +x /usr/libexec/k3s/k3s
 
+mkdir -p /usr/src/longhorn
 curl -o /usr/src/longhorn/longhorn.yaml -sfL https://raw.githubusercontent.com/longhorn/longhorn/${longhorn_version}/deploy/longhorn.yaml
