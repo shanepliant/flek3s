@@ -18,6 +18,7 @@ done
 
 # Packages:
 apk add grep jq linux-pam shadow open-vm-tools open-vm-tools-guestinfo open-vm-tools-deploypkg etcd bash vim openssh sudo open-vm-tools-vix open-vm-tools-hgfs open-vm-tools-timesync open-vm-tools-vmbackup open-vm-tools-plugins-all curl wget etcd-ctl open-iscsi cfssl
+apk remove kubectl
 
 # Init:
 rc-update add open-vm-tools default
@@ -63,5 +64,5 @@ version_url="${INSTALL_K3S_CHANNEL_URL}/${INSTALL_K3S_CHANNEL}"
 VERSION_K3S=$(curl -w '%{url_effective}' -L -s -S ${version_url} -o /dev/null | sed -e 's|.*/||')
 BIN_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s
 curl -o /usr/local/bin/k3s -sfL $BIN_URL 
-chomd +x /usr/local/bin/k3s
+chmod +x /usr/local/bin/k3s
 
