@@ -119,10 +119,10 @@ else
 	if [ $newnodes -eq 1 ]; then 
 	# if one node, install single node K3s
 		echo "Installing single K3s node..."
-		curl -sfL https://get.k3s.io | sudo sh -s - --write-kubeconfig-mode 644 --no-deploy traefik && sayok || sayerror
+		sudo /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik && sayok || sayerror
 	elif [ $newnodes -eq 3 ]; then 
 	# if 3 node, install 3 node K3s
 		echo "Installing multi node K3s..."
-		sudo /usr/local/bin/k3s-deploy-multi && sayok || sayerror
+		sudo /usr/libexec/flek3s/k3s-deploy-multi && sayok || sayerror
 	fi
 fi
