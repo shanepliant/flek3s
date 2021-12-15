@@ -1,0 +1,20 @@
+#!/bin/bash
+
+echo "This will remove all Kubernetes data and configuration from this node"
+echo "and put the node back to the factory defaults, retaining only static IP (if set)"
+echo "Are you sure you want to continue? Enter 'yes' to continue "
+read -e cont
+if [ "$cont" == yes ]; then 
+	#do the whack steps
+	echo " Continuing with factory-reset"
+	rc-update del etcd
+	rc-update del k3s
+	/etc/init.d/etcd stop
+	/etc/init.d/k3s stop
+	rm -r /var/lib/rancher
+	rm -r /var/lib/etcd/*
+else
+	echo " Not continuing with factory reset"
+	exit 0
+fi
+
