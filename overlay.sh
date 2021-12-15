@@ -38,6 +38,7 @@ fi
 # File permissions: 
 # should be root:root 700 unless specified here
 # /usr/local/bin
+mkdir -p /usr/libexec/k3s
 cd /usr/local/bin/
 chown root:root *
 chmod 700 *
@@ -51,3 +52,16 @@ echo "Log in to run initial setup" >> /etc/issue
 echo "Default user: setup" >> /etc/issue
 echo "Default password: changeme" >> /etc/issue
 echo "" >> /etc/issue
+
+# Pull files that are not ours and not available via apk
+curl -sfL https://get.k3s.io > /usr/libexec/k3s/install.sh
+chmod u+x /usr/libexec/k3s/install.sh
+GITHUB_URL=https://github.com/k3s-io/k3s/releases
+INSTALL_K3S_CHANNEL_URL=${INSTALL_K3S_CHANNEL_URL:-'https://update.k3s.io/v1-release/channels'}
+INSTALL_K3S_CHANNEL=${INSTALL_K3S_CHANNEL:-'stable'}
+version_url="${INSTALL_K3S_CHANNEL_URL}/${INSTALL_K3S_CHANNEL}"
+VERSION_K3S=$(curl -w '%{url_effective}' -L -s -S ${version_url} -o /dev/null | sed -e 's|.*/||')
+BIN_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s
+curl -o /usr/local/bin/k3s -sfL $BIN_URL 
+chomd +x /usr/local/bin/k3s
+

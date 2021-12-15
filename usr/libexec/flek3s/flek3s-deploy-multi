@@ -512,7 +512,7 @@ else
 		user=$(eval echo \$node${nodeid}_user)
 		echo ""
 		echo ">>> Deploying K3s to $hname / $ip"
-		echo "curl -sfL https://get.k3s.io | sudo sh -s - --write-kubeconfig-mode 644 --no-deploy traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem --token=aefw45k8g67w45876" | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
+		echo "INSTALL_K3S_SKIP_DOWNLOAD=true /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik --write-kubeconfig-mode 644 --no-deploy traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem --token=aefw45k8g67w45876" | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo chmod u+x /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo /usr/local/bin/k3s-redeploy  && sayok || sayerr
 	done
