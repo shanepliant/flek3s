@@ -4,7 +4,7 @@ run_dir=$(dirname "$BASH_SOURCE")
 echo "run_dir = $run_dir"
 upgrade="false"
 
-function sayerr() { echo "[ ERROR ]"; exit 1; }
+function sayerr() { echo "[ ERROR ]"; /usr/local/bin/pause; exit 1; }
 function sayok() { echo "[ OK ]"; }
 
 function validate_ip {

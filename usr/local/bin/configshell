@@ -197,7 +197,9 @@ elif [ "$initial_setup_ran" == "true" ] && [ "$kubernetes_running" == "false" ];
 	if [ "$run_setup" == "y" ]; then 
 		echo "Starting K3s Kubernetes setup process"
 		echo ""
+		clear
 		sudo /usr/local/bin/flek3s-setup
+		/usr/local/bin/pause
 	else
 		default_menu
 	fi
