@@ -45,7 +45,7 @@ fi
 getent passwd peer > /dev/null 2>&1
 if [ $? -ne 0 ]; then 
 	echo "Adding peer user..."
-	useradd -s /bin/bash peer
+	adduser -D -s /bin/bash peer
 else
 	echo "Peer user already exists"
 fi
