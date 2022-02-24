@@ -101,7 +101,7 @@ echo "New DNS1:      $NEWDNS1";
 echo "New DNS2:      $NEWDNS2";
 echo ""
 echo "You MUST reboot to apply changes!"
-pause
+/usr/local/bin/pause
 # Build the new IP address config
 printf "auto lo\niface lo inet loopback\n\nauto eth0\niface eth0 inet static\n   address ${NEWIP}/${NEWCIDR}\n   gateway ${NEWGATEWAY}\n"> /etc/network/interfaces
 # Build the new DNS config

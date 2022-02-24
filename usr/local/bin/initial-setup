@@ -41,5 +41,5 @@ echo "Ready to run Kubernetes setup." >> /etc/issue
 echo "You only need to run the setup process from one node." >> /etc/issue
 echo "Log in as 'setup' with your password set during initial-setup" >> /etc/issue
 echo ""
-
+/usr/local/bin/pause
 sudo /sbin/reboot

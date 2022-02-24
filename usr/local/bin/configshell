@@ -101,6 +101,10 @@ if [ "$kubernetes_running" == "true" ]; then
 	while [ 1 ]; do 
 		echo ""
 		echo "Enter one of the following commands and press enter:"
+		echo "  get-nodes         - See Kubernetes nodes"
+		echo "  get-pods          - See Kubernetes pods running in the default namespace"
+		echo "  etcd-members      - See etcd cluster members"
+		echo "  etcd-health       - See etcd cluster health"
 		echo "  ipconfig          - Configure Network"
 		echo "  ntpconfig         - Configure Network Time Protocol Servers"
 		echo "  sshconfig         - Enable/Disable SSH Daemon"
@@ -114,6 +118,31 @@ if [ "$kubernetes_running" == "true" ]; then
 
 		case "$choice" in
 
+
+		"get-nodes")
+			clear
+			/usr/local/bin/kubectl get nodes
+			/usr/local/bin/pause
+			clear
+			;;
+		"get-pods")
+			clear
+			/usr/local/bin/kubectl get pods
+			/usr/local/bin/pause
+			clear
+			;;
+		"etcd-members")
+			clear
+			/usr/local/bin/etcd_cluster_members
+			/usr/local/bin/pause
+			clear
+			;;
+		"etcd-health")
+			clear
+			/usr/local/bin/etcd_cluster_health
+			/usr/local/bin/pause
+			clear
+			;;
 		"ipconfig")
 			clear
 			sudo /usr/local/bin/ipconfig

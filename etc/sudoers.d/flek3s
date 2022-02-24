@@ -13,3 +13,4 @@ setup ALL=(ALL) NOPASSWD: /usr/local/bin/factory-reset
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/etcd-members
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/etcd-health
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/kubectl
+setup ALL=(ALL) NOPASSWD: /usr/libexec/k3s/k3s-deploy-multi
