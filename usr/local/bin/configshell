@@ -1,5 +1,83 @@
 #!/bin/bash
 
+function default_menu {
+	# Show the default menu
+	clear
+	echo ""
+	echo "Welcome to fleK3s Appliance Kubernetes"
+	echo "Use these options at your own risk"
+	while [ 1 ]; do 
+	echo ""
+	echo "Enter one of the following commands and press enter:"
+	echo "  initialize        - Run initial setup"
+	echo "  ipconfig          - Configure Network"
+	echo "  ntpconfig         - Configure Network Time Protocol Servers"
+	echo "  sshconfig         - Enable/Disable SSH Daemon"
+	echo "  passwd            - Change k3config password"
+	echo "  bash              - Open a BASH command shell as root"
+	echo "  logout"
+	echo "  reboot"
+	echo "  shutdown"
+	echo ""
+	read -p "> " choice
+
+	case "$choice" in
+
+	"initialize")
+	clear
+	sudo /usr/local/bin/initial-setup
+	clear
+	break
+	;;
+	"ipconfig")
+	clear
+	sudo /usr/local/bin/ipconfig
+	clear
+	break
+	;;
+	"ntpconfig")
+	clear
+	sudo /usr/local/bin/ntpconfig
+	clear
+	break
+	;;
+	"sshconfig")
+	clear
+	sudo /usr/local/bin/sshconfig
+	clear
+	break
+	;;
+	"passwd")
+	clear
+	passwd
+	clear
+	break
+	;;
+	"logout"|"exit"|"quit"|"logoff"|"logo")
+	clear
+	exit 0
+	;;
+	"reboot")
+	sudo /sbin/reboot
+	;;
+	"shutdown")
+	sudo /sbin/poweroff
+	;;
+	"bash")
+	sudo su - root
+	;;
+	*)
+	clear
+	echo ""
+	echo "\"${choice}\" is not a valid entry"
+	echo ""
+	;;
+	esac
+	done
+}
+
+while [ 1 ]; do 
+
 # Check if the K3s init script is present, this would indicate that K3s is installed
 if [ -f /etc/init.d/k3s ]; then 
 	kubernetes_running="true"
@@ -91,8 +169,9 @@ elif [ "$initial_setup_ran" == "true" ] && [ "$kubernetes_running" == "false" ];
 		echo "Starting K3s Kubernetes setup process"
 		echo ""
 		/usr/libexec/flek3s/flek3s-deploy-multi
+	else
+		default_menu
 	fi
-
 else
 # Run initial setup
 	echo ""
@@ -107,76 +186,8 @@ else
 		echo "Starting initial setup process"
 		echo ""
 		sudo /usr/local/bin/initial-setup
+	else
+		default_menu
 	fi
 fi
-
-
-# Show the default menu
-clear
-echo ""
-echo "Welcome to fleK3s Appliance Kubernetes"
-echo "Use these options at your own risk"
-while [ 1 ]; do 
-echo ""
-echo "Enter one of the following commands and press enter:"
-echo "  initialize        - Run initial setup"
-echo "  ipconfig          - Configure Network"
-echo "  ntpconfig         - Configure Network Time Protocol Servers"
-echo "  sshconfig         - Enable/Disable SSH Daemon"
-echo "  passwd            - Change k3config password"
-echo "  bash              - Open a BASH command shell as root"
-echo "  logout"
-echo "  reboot"
-echo "  shutdown"
-echo ""
-read -p "> " choice
-
-case "$choice" in
-
-"initialize")
-	clear
-	sudo /usr/local/bin/initial-setup
-	clear
-	;;
-"ipconfig")
-	clear
-	sudo /usr/local/bin/ipconfig
-	clear
-	;;
-"ntpconfig")
-	clear
-	sudo /usr/local/bin/ntpconfig
-	clear
-	;;
-"sshconfig")
-	clear
-	sudo /usr/local/bin/sshconfig
-	clear
-	;;
-"passwd")
-	clear
-	passwd
-	clear
-	;;
-"logout"|"exit"|"quit"|"logoff"|"logo")
-	clear
-	exit 0
-	;;
-"reboot")
-	sudo /sbin/reboot
-	;;
-"shutdown")
-	sudo /sbin/poweroff
-	;;
-"bash")
-	sudo su - root
-	;;
-*)
-	clear
-	echo ""
-	echo "\"${choice}\" is not a valid entry"
-	echo ""
-	;;
-esac
-
 done

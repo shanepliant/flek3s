@@ -64,7 +64,6 @@ fi
 # Determine the present state. Is K3s installed? Single or multi node?
 k3s_installed=-1
 k3s_nodes=-1
-current_ver="N/A"
 
 # k3s check
 k3s --version >/dev/null 2>&1 && k3s_installed=1 || k3s_installed=0
@@ -79,7 +78,6 @@ if [ $k3s_installed -eq 1 ]; then
 		exit 1
 	fi
 else
-	k3s_installed=0
 	echo "[ INFO ] K3s not installed"
 fi
 
@@ -97,12 +95,13 @@ if [ $k3s_installed -eq 1 ]; then
 	countdown 10
 	if [ $k3s_nodes -eq 1 ]; then 
 		echo "Upgrading single K3s node..."
-		curl -sfL https://get.k3s.io | sudo sh -s - --write-kubeconfig-mode 644 --no-deploy traefik && sayok || sayerror
+		cp /usr/libexec/k3s/k3s /usr/local/bin/k3s
+                INSTALL_K3S_SKIP_DOWNLOAD=true sudo /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik && sayok || sayerror
 		echo "Restarting K3s..."
 		sudo /etc/init.d/k3s restart
 	elif [ $k3s_nodes -gt 1 ]; then
 		echo "[ INFO ] Upgrading multi-node cluster"
-		sudo /usr/local/bin/k3s-deploy-multi --upgrade true && sayok || sayerror
+		sudo /usr/libexec/k3s/k3s-deploy-multi --upgrade true && sayok || sayerror
 	else
 		echo "[ ERROR ] Unsupported cluster detected. Has $k3s_nodes nodes."
 		exit 1
@@ -119,7 +118,8 @@ else
 	if [ $newnodes -eq 1 ]; then 
 	# if one node, install single node K3s
 		echo "Installing single K3s node..."
-		sudo /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik && sayok || sayerror
+		cp /usr/libexec/k3s/k3s /usr/local/bin/k3s
+  		INSTALL_K3S_SKIP_DOWNLOAD=true sudo /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik && sayok || sayerror
 	elif [ $newnodes -eq 3 ]; then 
 	# if 3 node, install 3 node K3s
 		echo "Installing multi node K3s..."

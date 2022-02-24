@@ -87,4 +87,5 @@ chmod +x /usr/libexec/k3s/k3s
 
 echo "Getting Longhorn YAML for version ${longhorn_version}..."
 mkdir -p /usr/src/longhorn
-curl -o /usr/src/longhorn/longhorn.yaml -sfL https://raw.githubusercontent.com/longhorn/longhorn/${longhorn_version}/deploy/longhorn.yaml
+#curl -o /usr/src/longhorn/longhorn.yaml -sfL https://raw.githubusercontent.com/longhorn/longhorn/${longhorn_version}/deploy/longhorn.yaml
+wget -P /usr/src/longhorn/ https://raw.githubusercontent.com/longhorn/longhorn/${longhorn_version}/deploy/longhorn.yaml
