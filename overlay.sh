@@ -23,6 +23,7 @@ done
 
 # Packages:
 echo "Adding Alpine packages..."
+apk update
 apk add grep jq linux-pam shadow open-vm-tools open-vm-tools-guestinfo open-vm-tools-deploypkg etcd bash vim openssh sudo open-vm-tools-vix open-vm-tools-hgfs open-vm-tools-timesync open-vm-tools-vmbackup open-vm-tools-plugins-all curl wget etcd-ctl open-iscsi cfssl
 apk del kubectl
 
