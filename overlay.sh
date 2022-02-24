@@ -9,7 +9,7 @@
 #  file permissions are set
 
 # Variables
-longhorn_version="1.2.2"
+longhorn_version="1.2.0"
 
 # Files:
 echo "Putting flek3s source files in place..."
@@ -90,7 +90,9 @@ INSTALL_K3S_CHANNEL=${INSTALL_K3S_CHANNEL:-'stable'}
 version_url="${INSTALL_K3S_CHANNEL_URL}/${INSTALL_K3S_CHANNEL}"
 VERSION_K3S=$(curl -w '%{url_effective}' -L -s -S ${version_url} -o /dev/null | sed -e 's|.*/||')
 BIN_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s
+PACK_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s-airgap-images-amd64.tar
 curl -o /usr/libexec/k3s/k3s -sfL $BIN_URL 
+curl -o /usr/libexec/k3s/k3s -sfL $PACK_URL 
 chmod +x /usr/libexec/k3s/k3s
 
 echo "Getting Longhorn YAML for version ${longhorn_version}..."
