@@ -148,7 +148,7 @@ for nodeid in 0 1 2; do
 			echo "--- Public key already authorized on $(eval echo \$node${nodeid}_ip)"
 		else 
 			echo ">>> Adding public key to authorized_keys on $(eval echo \$node${nodeid}_ip)"
-			ssh ${node_user}@$(eval echo \$node${nodeid}_ip) "mkdir -p .ssh"
+#			ssh ${node_user}@$(eval echo \$node${nodeid}_ip) "mkdir -p .ssh"
 			cat ~/.ssh/id_rsa.pub | ssh ${node_user}@$(eval echo \$node${nodeid}_ip) "tee -a .ssh/authorized_keys"
 		fi
 		valid=$?
@@ -346,8 +346,8 @@ echo""
 echo "+++ ETCD Cluster: $cluster"
 echo "+++ ETCD Endpoints: $endpoints"
 echo""
-echo "/usr/local/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem member list" > etcd_cluster_members
-echo "/usr/local/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem endpoint health" > etcd_cluster_health
+echo "/usr/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem member list" > etcd_cluster_members
+echo "/usr/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem endpoint health" > etcd_cluster_health
 
 
 for nodeid in 0 1 2; do 

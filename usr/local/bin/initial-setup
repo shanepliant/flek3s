@@ -38,7 +38,9 @@ done
 cp /etc/issue.base /etc/issue
 echo "" >> /etc/issue
 echo "Ready to run Kubernetes setup." >> /etc/issue
+echo "This node's IP$(grep address /etc/network/interfaces | tr -s ' ' )"
 echo "You only need to run the setup process from one node." >> /etc/issue
 echo "Log in as 'setup' with your password set during initial-setup" >> /etc/issue
+echo "" >> /etc/issue
 echo ""
 sudo /sbin/reboot

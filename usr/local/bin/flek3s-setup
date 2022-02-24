@@ -62,7 +62,7 @@ if [ $k3s_installed -eq 1 ]; then
 		/etc/init.d/k3s restart && sayok || sayerror
 	elif [ $k3s_nodes -gt 1 ]; then
 		echo "[ INFO ] Upgrading multi-node cluster"
-		/usr/libexec/k3s/k3s-deploy-multi --upgrade true && sayok || sayerror
+		/usr/libexec/k3s/flek3s-deploy-multi --upgrade true && sayok || sayerror
 	else
 		echo "[ ERROR ] Unsupported cluster detected. Has $k3s_nodes nodes."
 		exit 1
@@ -84,7 +84,7 @@ else
 	elif [ $newnodes -eq 3 ]; then 
 	# if 3 node, install 3 node K3s
 		echo "Installing multi node K3s..."
-		/usr/libexec/flek3s/k3s-deploy-multi && sayok || sayerror
+		/usr/libexec/flek3s/flek3s-deploy-multi && sayok || sayerror
 	fi
 fi
 

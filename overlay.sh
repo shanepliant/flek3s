@@ -61,6 +61,10 @@ chown setup:root configshell
 chmod +x pause validate_ip mask2cidr cidr2mask
 cd -
 
+# Set up the .ssh directory for the peer user
+mkdir -p /home/peer/.ssh 
+chown peer:peer /home/peer/.ssh
+
 # /usr/libexec/flek3s
 chown root:root /usr/libexec/flek3s/*
 chmod 700 /usr/libexec/flek3s/*
@@ -91,6 +95,6 @@ chmod +x /usr/libexec/k3s/k3s
 
 echo "Getting Longhorn YAML for version ${longhorn_version}..."
 mkdir -p /usr/src/longhorn
-#curl -o /usr/src/longhorn/longhorn.yaml -sfL https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
-rm /usr/src/longhorn/longhorn.yaml
-wget -P /usr/src/longhorn/ https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
+curl -o /usr/src/longhorn/longhorn.yaml -sfL https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
+#rm /usr/src/longhorn/longhorn.yaml
+#wget -P /usr/src/longhorn/ https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
