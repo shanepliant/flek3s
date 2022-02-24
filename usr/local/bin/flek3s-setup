@@ -1,5 +1,8 @@
 #!/bin/bash
 
+export INSTALL_K3S_SKIP_DOWNLOAD=true 
+export PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
 function sayerror() { echo "[ ERROR ]"; /usr/local/bin/pause; exit 1; }
 
 function sayok() { echo "[ OK ]"; }
@@ -54,17 +57,12 @@ if [ $k3s_installed -eq 1 ]; then
 	if [ $k3s_nodes -eq 1 ]; then 
 		echo "Upgrading single K3s node..."
 		cp /usr/libexec/k3s/k3s /usr/local/bin/k3s && sayok || sayerror
-                export INSTALL_K3S_SKIP_DOWNLOAD=true 
-		export PATH=/sbin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
 		/bin/bash -c '/usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik' && sayok || sayerror
 		echo "Restarting K3s..."
 		/etc/init.d/k3s restart && sayok || sayerror
-		/usr/local/bin/pause
-		
 	elif [ $k3s_nodes -gt 1 ]; then
 		echo "[ INFO ] Upgrading multi-node cluster"
 		/usr/libexec/k3s/k3s-deploy-multi --upgrade true && sayok || sayerror
-		/usr/local/bin/pause
 	else
 		echo "[ ERROR ] Unsupported cluster detected. Has $k3s_nodes nodes."
 		exit 1
@@ -82,15 +80,12 @@ else
 	# if one node, install single node K3s
 		echo "Installing single K3s node..."
 		cp /usr/libexec/k3s/k3s /usr/local/bin/k3s && sayok || sayerror
-		export PATH=/sbin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
-  		export INSTALL_K3S_SKIP_DOWNLOAD=true 
 		/bin/bash -c '/usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik' && sayok || sayerror
-		/etc/init.d/k3s start && sayok || sayerror
-		/usr/local/bin/pause
 	elif [ $newnodes -eq 3 ]; then 
 	# if 3 node, install 3 node K3s
 		echo "Installing multi node K3s..."
 		/usr/libexec/flek3s/k3s-deploy-multi && sayok || sayerror
-		/usr/local/bin/pause
 	fi
 fi
+
+/usr/local/bin/pause

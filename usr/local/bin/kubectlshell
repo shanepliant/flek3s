@@ -1,0 +1,19 @@
+#!/bin/bash
+
+clear
+echo ""
+echo "Welcome to the kubectl shell. "
+echo "Enter commands at the prompt exactly as you would give arguments to the kubectl utility."
+echo " For example, to see your nodes:"
+echo ""
+echo "  kubectl> get nodes"
+echo ""
+echo "Give the 'exit' command to quit"
+echo ""
+
+while [ 1 ]; do 
+	echo ""
+	read -p "kubectl> " CMD
+	if [ "$CMD" == "exit" ]; then exit 0; fi
+	/usr/local/bin/kubectl $CMD
+done
