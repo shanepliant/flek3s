@@ -122,6 +122,7 @@ if [ "$kubernetes_running" == "true" ]; then
 			clear
 			/usr/local/bin/kubectlshell
 			clear
+			;;
 		"etcd-members")
 			clear
 			/usr/local/bin/etcd_cluster_members
