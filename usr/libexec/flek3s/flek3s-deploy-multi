@@ -545,7 +545,8 @@ echo ""
 #   K3s Installation 
 #
 ############
-
+token_material=$(sha256sum /etc/shadow | base64)
+token=${token_material:5:17}
 if [ "$upgrade" == "true" ]; then 
 	for nodeid in 0 1 2; do 
 		ip=$(eval echo \$node${nodeid}_ip)
@@ -563,7 +564,7 @@ else
 		user=$(eval echo \$node${nodeid}_user)
 		echo ""
 		echo ">>> Deploying K3s to $hname / $ip"
-		echo "cp /usr/libexec/k3s/k3s /usr/local/bin/; INSTALL_K3S_SKIP_DOWNLOAD=true /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik --write-kubeconfig-mode 644 --no-deploy traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem"  | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
+		echo "cp /usr/libexec/k3s/k3s /usr/local/bin/; INSTALL_K3S_SKIP_DOWNLOAD=true /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik --write-kubeconfig-mode 644 --no-deploy traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem --token=${token}"  | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo chmod u+x /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo /usr/local/bin/k3s-redeploy  && sayok || sayerr
 	done
