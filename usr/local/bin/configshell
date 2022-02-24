@@ -13,7 +13,7 @@ function default_menu {
 	echo "  ipconfig          - Configure Network"
 	echo "  ntpconfig         - Configure Network Time Protocol Servers"
 	echo "  sshconfig         - Enable/Disable SSH Daemon"
-	echo "  passwd            - Change k3config password"
+	echo "  passwd            - Change 'setup' user password"
 	echo "  bash              - Open a BASH command shell as root"
 	echo "  logout"
 	echo "  reboot"
@@ -108,7 +108,7 @@ if [ "$kubernetes_running" == "true" ]; then
 		echo "  ipconfig          - Configure Network"
 		echo "  ntpconfig         - Configure Network Time Protocol Servers"
 		echo "  sshconfig         - Enable/Disable SSH Daemon"
-		echo "  passwd            - Change k3config password"
+		echo "  passwd            - Change 'setup' user password"
 		echo "  bash              - Open a BASH command shell as root"
 		echo "  logout"
 		echo "  reboot"
@@ -197,7 +197,7 @@ elif [ "$initial_setup_ran" == "true" ] && [ "$kubernetes_running" == "false" ];
 	if [ "$run_setup" == "y" ]; then 
 		echo "Starting K3s Kubernetes setup process"
 		echo ""
-		/usr/libexec/flek3s/flek3s-deploy-multi
+		sudo /usr/local/bin/flek3s-setup
 	else
 		default_menu
 	fi
