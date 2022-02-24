@@ -3,7 +3,8 @@
 # Set the peering code / peer user password
 echo "Enter a new password to use when connecting to this node to build the Kubernetes cluster."
 echo "This is the 'peer' password"
-while [ $good -ne 1 ]; do 
+good=1
+while [ $good -ne 0 ]; do 
 	passwd peer
 	good=$?
 done
@@ -11,7 +12,7 @@ good=1
 
 # Set the setup user password
 echo "Set a new password for the 'setup' user on this VM"
-while [ $good -ne 1 ]; do 
+while [ $good -ne 0 ]; do 
 	passwd setup
 	good=$?
 done
