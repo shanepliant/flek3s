@@ -3,6 +3,7 @@
 # get our tools
 apk add docker
 /etc/init.d/docker start
+sleep 30
 
 # images for longhorn-images.tar
 
@@ -32,7 +33,7 @@ k8s.gcr.io/sig-storage/csi-node-driver-registrar:v2.3.0 \
 k8s.gcr.io/sig-storage/csi-provisioner:v2.1.2 \
 k8s.gcr.io/sig-storage/csi-resizer:v1.2.0 \
 k8s.gcr.io/sig-storage/csi-snapshotter:v3.0.3 \
- > ./longhorn-images.tar
+ > /usr/src/longhorn/longhorn-images.tar
 
 # cleanup docker
 docker rmi $(docker images -q)
