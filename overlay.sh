@@ -92,7 +92,7 @@ VERSION_K3S=$(curl -w '%{url_effective}' -L -s -S ${version_url} -o /dev/null | 
 BIN_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s
 PACK_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s-airgap-images-amd64.tar
 curl -o /usr/libexec/k3s/k3s -sfL $BIN_URL 
-curl -o /usr/libexec/k3s/k3s -sfL $PACK_URL 
+curl -o /usr/libexec/k3s/k3s-airgap-images-amd64.tar -sfL $PACK_URL 
 chmod +x /usr/libexec/k3s/k3s
 
 echo "Getting Longhorn YAML for version ${longhorn_version}..."
