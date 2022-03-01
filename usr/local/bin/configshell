@@ -125,13 +125,13 @@ if [ "$kubernetes_running" == "true" ]; then
 			;;
 		"etcd-members")
 			clear
-			sudo /usr/local/bin/etcd_cluster_members
+			sudo /bin/bash /usr/local/bin/etcd_cluster_members
 			/usr/local/bin/pause
 			clear
 			;;
 		"etcd-health")
 			clear
-			sudo /usr/local/bin/etcd_cluster_health
+			sudo /bin/bash /usr/local/bin/etcd_cluster_health
 			/usr/local/bin/pause
 			clear
 			;;

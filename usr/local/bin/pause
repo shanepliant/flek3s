@@ -1,1 +1,2 @@
+#!/bin/bash
 read -p "Press enter to continue..." < /proc/${PPID}/fd/0

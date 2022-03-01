@@ -1,1 +1,2 @@
+#/bin/bash
 echo "etcd is not yet installed"
