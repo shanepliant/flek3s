@@ -13,7 +13,7 @@ function default_menu {
 	echo "  ipconfig          - Configure Network"
 	echo "  ntpconfig         - Configure Network Time Protocol Servers"
 	echo "  sshconfig         - Enable/Disable SSH Daemon"
-	echo "  passwd            - Change 'setup' user password"
+	echo "  userconfig        - Change user passwords or enable/disable users"
 	echo "  bash              - Open a BASH command shell as root"
 	echo "  logout"
 	echo "  reboot"
@@ -47,9 +47,9 @@ function default_menu {
 	clear
 	break
 	;;
-	"passwd")
+	"userconfig")
 	clear
-	passwd
+	user_menu
 	clear
 	break
 	;;
@@ -73,6 +73,56 @@ function default_menu {
 	echo ""
 	;;
 	esac
+	done
+}
+
+function user_menu {
+	# Show the user menu
+	clear
+	echo ""
+	echo "User Menu"
+	while [ 1 ]; do 
+		echo ""
+		echo "Enter one of the following commands and press enter:"
+		echo "  passwd-setup            - Change 'setup' user password"
+		echo "  passwd-peer             - Change 'peer' user password"
+		echo "  toggle-peer             - Enable or Disable the 'peer' user"
+		echo "  "
+		echo "  exit                    - Return to the previous menu"
+		echo ""
+		read -p "> " choice
+
+		case "$choice" in
+
+			"passwd-setup")
+				clear
+				passwd setup
+				clear
+				break
+				;;
+			"passwd-peer")
+				clear
+				sudo passwd peer
+				clear
+				break
+				;;
+			"toggle-peer")
+				clear
+				sudo toggle-user peer
+				clear
+				break
+				;;
+			"logout"|"exit"|"quit"|"logoff"|"logo")
+				clear
+				break
+				;;
+			*)
+				clear
+				echo ""
+				echo "\"${choice}\" is not a valid entry"
+				echo ""
+				;;
+		esac
 	done
 }
 
@@ -107,7 +157,7 @@ if [ "$kubernetes_running" == "true" ]; then
 		echo "  ipconfig          - Configure Network"
 		echo "  ntpconfig         - Configure Network Time Protocol Servers"
 		echo "  sshconfig         - Enable/Disable SSH Daemon"
-		echo "  passwd            - Change 'setup' user password"
+		echo "  userconfig        - Change user passwords or enable/disable users"
 		echo "  bash              - Open a BASH command shell as root"
 		echo "  logout"
 		echo "  reboot"
@@ -150,9 +200,9 @@ if [ "$kubernetes_running" == "true" ]; then
 			sudo /usr/local/bin/sshconfig
 			clear
 			;;
-		"passwd")
+		"userconfig")
 			clear
-			passwd
+			user_menu
 			clear
 			;;
 		"logout"|"exit"|"quit"|"logoff"|"logo")
