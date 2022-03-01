@@ -83,6 +83,13 @@ else
 		cp /usr/libexec/k3s/k3s /usr/local/bin/k3s && sayok || sayerror
 		/bin/bash -c '/usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik' && sayok || sayerror
 		/usr/local/bin/ctr -n k8s.io -a /run/k3s/containerd/containerd.sock image import /usr/libexec/k3s/k3s-airgap-images-amd64.tar	
+		cp /etc/issue.base /etc/issue
+		echo "" >> /etc/issue
+		echo "Single Node Kubernetes Cluster configured" >> /etc/issue
+		echo "Log in to this node as 'setup' using the password set during initial-setup" >> /etc/issue
+		echo "IP for this node is$(grep address /etc/network/interfaces | tr -s ' ')" >> /etc/issue
+		echo "" >> /etc/issue
+				
 	elif [ $newnodes -eq 3 ]; then 
 	# if 3 node, install 3 node K3s
 		echo "Installing multi node K3s..."

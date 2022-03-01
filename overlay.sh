@@ -100,3 +100,7 @@ mkdir -p /usr/src/longhorn
 curl -o /usr/src/longhorn/longhorn.yaml -sfL https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
 #rm /usr/src/longhorn/longhorn.yaml
 #wget -P /usr/src/longhorn/ https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
+
+echo "Update branding"
+sed -i /boot/extlinux.conf -e "s_AUTOBOOT Alpine_AUTOBOOT flek3s/Alpine_"
+

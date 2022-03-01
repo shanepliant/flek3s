@@ -4,13 +4,13 @@ echo ""
 username=$1
 
 # Does that user exist?
-sudo id -u $username > /dev/null 2>&1
+sudo /usr/bin/id -u $username > /dev/null 2>&1
 if [ $? -eq 1 ]; then 
 	echo "[ ERROR ] User '$username' does not exist."
 	exit 1
 fi
 
-userstate=$(sudo passwd --status $username | cut -d' ' -f2)
+userstate=$(sudo /usr/bin/passwd --status $username | cut -d' ' -f2)
 
 # Show current state and ask if changes wanted
 # Does the user want to make any changes?
@@ -31,9 +31,9 @@ if [ "$answer" == "n" ]; then
 else
         if [ "$userstate" == "L" ]; then
 		echo "Enabling $username ..."
-		sudo usermod -U $username
+		sudo /usr/sbin/usermod -U $username
         else
 		echo "Disabling $username ..."
-		sudo usermod -L $username
+		sudo /usr/sbin/usermod -L $username
 	fi
 fi

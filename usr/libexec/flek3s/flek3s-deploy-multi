@@ -346,9 +346,18 @@ echo""
 echo "+++ ETCD Cluster: $cluster"
 echo "+++ ETCD Endpoints: $endpoints"
 echo""
-echo "/usr/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem member list" > etcd_cluster_members
-echo "/usr/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem endpoint health" > etcd_cluster_health
 
+cat > etcd_cluster_members << EOF1
+#!/bin/bash
+/usr/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem member list
+/usr/local/bin/pause
+EOF1
+
+cat > etcd_cluster_health << EOF2
+#!/bin/bash
+/usr/bin/etcdctl --endpoints ${endpoints} --cacert /var/lib/etcd/cfssl/ca.pem --cert /var/lib/etcd/cfssl/client.pem --key /var/lib/etcd/cfssl/client-key.pem endpoint health
+/usr/local/bin/pause
+EOF2
 
 for nodeid in 0 1 2; do 
 	ip=$(eval echo \$node${nodeid}_ip)
@@ -613,3 +622,32 @@ else
 fi
 echo ""
 
+
+#########################
+#
+# Node environmental updates
+#
+#########################
+
+cp /etc/issue.base /tmp/issue
+cat >> /tmp/issue << EOF3
+
+Kubernetes Cluster configured with these members:
+${node0_hostname}  ${node0_ip}
+${node1_hostname}  ${node1_ip}
+${node2_hostname}  ${node2_ip}
+
+Log in to this node as 'setup' using the password set during initial-setup
+EOF3
+
+for nodeid in 0 1 2; do 
+	ip=$(eval echo \$node${nodeid}_ip)
+	hname=$(eval echo \$node${nodeid}_hostname)
+	user=$(eval echo \$node${nodeid}_user)
+	echo ""
+	echo ">>> Adjusting /etc/issue for $hname / $ip"
+	scp /tmp/issue ${user}@${ip}: && sayok || sayerr
+	ssh ${user}@${ip} sudo mv issue /etc/ && sayok || sayerr
+	ssh ${user}@${ip} 'echo IP for this node is$(grep address /etc/network/interfaces | tr -s " " ) | sudo tee -a /etc/issue' && sayok || sayerr
+	ssh ${user}@${ip} 'echo " " | sudo tee -a /etc/issue' && sayok || sayerr
+done

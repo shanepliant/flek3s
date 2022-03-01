@@ -96,19 +96,19 @@ function user_menu {
 
 			"passwd-setup")
 				clear
-				passwd setup
+				/usr/bin/passwd setup
 				clear
 				break
 				;;
 			"passwd-peer")
 				clear
-				sudo passwd peer
+				sudo /usr/bin/passwd peer
 				clear
 				break
 				;;
 			"toggle-peer")
 				clear
-				sudo toggle-user peer
+				sudo /usr/local/bin/toggle-user peer
 				clear
 				break
 				;;
@@ -175,13 +175,13 @@ if [ "$kubernetes_running" == "true" ]; then
 			;;
 		"etcd-members")
 			clear
-			sudo /bin/bash /usr/local/bin/etcd_cluster_members
+			sudo /usr/local/bin/etcd_cluster_members
 			/usr/local/bin/pause
 			clear
 			;;
 		"etcd-health")
 			clear
-			sudo /bin/bash /usr/local/bin/etcd_cluster_health
+			sudo /usr/local/bin/etcd_cluster_health
 			/usr/local/bin/pause
 			clear
 			;;
