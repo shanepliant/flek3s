@@ -38,12 +38,12 @@ if [ "$answer" == "n" ]; then
 else
         if [ "$ssh_enabled" == "yes" ]; then
 		echo "Disabling SSHD..."
-		rc-update del sshd
+		/sbin/rc-update del sshd
 		echo "Stopping SSHD..."
 		/etc/init.d/sshd stop
         else
                 echo "Enabling SSHD...";
-		rc-update add sshd default
+		/sbin/rc-update add sshd default
                 echo "Starting SSHD...";
 		/etc/init.d/sshd start
 	fi

@@ -61,7 +61,7 @@ else
                         echo "Enter new NTP1 IP (Press enter to use $NTP1):";
                         read -e NEWNTP1;
                         if [ "$NEWNTP1" == "" ] ; then NEWNTP1=$NTP1; fi
-                        if validate_ip "$NEWNTP1"; then echo "New NTP1 IP is OK." && VALIDIP=0; else echo "IP for NTP1 is invalid, please enter a new one."; fi;
+                        if /usr/local/bin/validate_ip "$NEWNTP1"; then echo "New NTP1 IP is OK." && VALIDIP=0; else echo "IP for NTP1 is invalid, please enter a new one."; fi;
                 done;
 
                 VALIDIP=1;
@@ -71,7 +71,7 @@ else
                         echo "Enter new NTP2 IP (Press enter to use $NTP2):";
                         read -e NEWNTP2;
                         if [ "$NEWNTP2" == "" ] ; then NEWNTP2=$NTP2; fi
-                        if validate_ip "$NEWNTP2"; then echo "New NTP2 IP is OK." && VALIDIP=0; else echo "IP for NTP2 is invalid, please enter a new one."; fi;
+                        if /usr/local/bin/validate_ip "$NEWNTP2"; then echo "New NTP2 IP is OK." && VALIDIP=0; else echo "IP for NTP2 is invalid, please enter a new one."; fi;
                 done;
 		
 		echo ""

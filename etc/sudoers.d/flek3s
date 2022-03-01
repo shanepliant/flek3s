@@ -8,6 +8,7 @@ setup ALL=(ALL) PASSWD:   /sbin/reboot
 setup ALL=(ALL) PASSWD:   /sbin/poweroff
 setup ALL=(ALL) PASSWD:   /bin/su
 setup ALL=(ALL) NOPASSWD: /sbin/apk
+setup ALL=(ALL) NOPASSWD: /sbin/rc-update
 setup ALL=(ALL) NOPASSWD: /etc/init.d/k3s
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/k3s-redeploy
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/factory-reset
