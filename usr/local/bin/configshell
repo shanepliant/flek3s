@@ -87,6 +87,8 @@ function user_menu {
 		echo "  passwd-setup            - Change 'setup' user password"
 		echo "  passwd-peer             - Change 'peer' user password"
 		echo "  toggle-peer             - Enable or Disable the 'peer' user"
+		echo "  passwd-update           - Change 'update' user password"
+		echo "  toggle-update           - Enable or Disable the 'update' user"
 		echo "  "
 		echo "  exit                    - Return to the previous menu"
 		echo ""
@@ -109,6 +111,18 @@ function user_menu {
 			"toggle-peer")
 				clear
 				sudo /usr/local/bin/toggle-user peer
+				clear
+				break
+				;;
+			"passwd-update")
+				clear
+				sudo /usr/bin/passwd update
+				clear
+				break
+				;;
+			"toggle-update")
+				clear
+				sudo /usr/local/bin/toggle-user update
 				clear
 				break
 				;;

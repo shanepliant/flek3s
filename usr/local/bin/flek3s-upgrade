@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# Run the upgrade to the flek3s appliance
+
+# Check for the locally uploaded package
+# If the package is not found, in the future we can offer to download it
+
+# Extract the file to the staging directory
+
+# Run the update script
+
+# Clean up the staging directory

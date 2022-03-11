@@ -49,6 +49,22 @@ if [ $? -ne 0 ]; then
 else
 	echo "Peer user already exists"
 fi
+# update / [user settable] is the update user (used for uploading upgrade files via sftp)
+getent passwd update > /dev/null 2>&1
+if [ $? -ne 0 ]; then 
+	echo "Adding update user..."
+	adduser -D --home /usr/src/flek3s update
+else
+	echo "update user already exists"
+fi
+
+cat << EOF >> /etc/sshd_config
+Match user update
+  ForceCommand internal-sftp
+  ChrootDirectory /usr/src/flek3s
+
+Subsystem       sftp    internal-sftp
+EOF
 
 # File permissions: 
 # should be root:root 700 unless specified here
