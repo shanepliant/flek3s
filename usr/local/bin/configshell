@@ -100,31 +100,26 @@ function user_menu {
 				clear
 				/usr/bin/passwd setup
 				clear
-				break
 				;;
 			"passwd-peer")
 				clear
 				sudo /usr/bin/passwd peer
 				clear
-				break
 				;;
 			"toggle-peer")
 				clear
 				sudo /usr/local/bin/toggle-user peer
 				clear
-				break
 				;;
 			"passwd-update")
 				clear
 				sudo /usr/bin/passwd update
 				clear
-				break
 				;;
 			"toggle-update")
 				clear
 				sudo /usr/local/bin/toggle-user update
 				clear
-				break
 				;;
 			"logout"|"exit"|"quit"|"logoff"|"logo")
 				clear
@@ -172,6 +167,7 @@ if [ "$kubernetes_running" == "true" ]; then
 		echo "  ntpconfig         - Configure Network Time Protocol Servers"
 		echo "  sshconfig         - Enable/Disable SSH Daemon"
 		echo "  userconfig        - Change user passwords or enable/disable users"
+		echo "  upgrade           - Run a flek3s upgrade"
 		echo "  bash              - Open a BASH command shell as root"
 		echo "  logout"
 		echo "  reboot"
@@ -212,6 +208,11 @@ if [ "$kubernetes_running" == "true" ]; then
 		"sshconfig")
 			clear
 			sudo /usr/local/bin/sshconfig
+			clear
+			;;
+		"upgrade")
+			clear
+			sudo /usr/local/bin/flek3s-upgrade
 			clear
 			;;
 		"userconfig")

@@ -62,14 +62,14 @@ esac
 # If the package is not found, in the future we can offer to download it
 # If we're still running, we know what $upgfile is
 echo "[ INFO ] Initiating upgrade using file $upgfile"
-echo "[ INFO ] sha256sum: $( sha256sum ${upgdir}/${upgfile} | cut -d' ' -f1 )"
+echo "[ INFO ] sha256sum: $( sha256sum ${upgfile} | cut -d' ' -f1 )"
 /usr/local/bin/pause
 
 # Extract the file to the staging directory
 stgdir=/tmp/flek3s-upg-stage-$(date +%s)
 rm -rf /tmp/flek3s-upg-stage-*
 mkdir -p $stgdir && sayok || sayerror
-tar -xf ${upgdir}/${upgfile} -C ${stgdir}/ && sayok || sayerror
+tar -xf ${upgfile} -C ${stgdir}/ && sayok || sayerror
 
 # Run the update script
 if [ -f ${stgdir}/upgrade.sh ]; then 
@@ -83,5 +83,5 @@ else
 fi
 
 # Clean up the upgrade and staging directory
-#rm ${upgdir}/${upgfile}
+#rm ${upgfile}
 #rm -rf /tmp/flek3s-upg-stage-*
