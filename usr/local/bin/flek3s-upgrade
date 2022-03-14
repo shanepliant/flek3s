@@ -1,12 +1,87 @@
 #!/bin/bash
+export PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin
+
+function sayerror() { echo "[ ERROR ]"; /usr/local/bin/pause; exit 1; }
+function sayok() { echo "[ OK ]"; }
 
 # Run the upgrade to the flek3s appliance
 
 # Check for the locally uploaded package
+upgdir=/usr/src/flek3s
+files=$(ls ${upgdir}/flek3s-*.tar.gz)
+if [ $? -ne 0 ]; then
+	echo "[ ERROR ] Could not list files from upgrade directory $upgdir"
+	/usr/local/bin/pause
+	exit 1
+fi
+
+filecount=$( echo $files | wc -w )
+case $filecount in
+	0)
+		echo "[ ERROR ] No upgrade file found."
+		exit 1
+		;;
+	1)
+		echo "[ OK ] One upgrade file found."
+		upgfile=$files
+		;;
+	*)
+		echo "Multiple upgrade files found. Please choose the desired file."
+		while [ 1 ]; do
+			echo "";
+			INDEX=0;
+			SELECTION=-1;
+			for ITEM in $files; do
+			    let INDEX++;
+			    echo "        ${INDEX}. $ITEM";
+			done;
+			echo "";
+			while [[ $SELECTION -gt $INDEX || $SELECTION -lt 1 ]] && [ $SELECTION != "exit" ]; do
+			    read -p "Choose one by number, or enter 'exit':" SELECTION
+			done;
+
+			#echo "DEBUG: Selected $SELECTION"
+
+			if [ $SELECTION == "exit" ]; then
+				exit 0
+			fi
+
+			INDEX=1;
+			for ITEM in $files; do
+			    if [ $SELECTION -eq $INDEX ]; then
+				upgfile=$ITEM;
+				#echo "DEBUG: It was $ITEM"
+				break;
+			    fi;
+			    let INDEX++;
+			#    echo "DEBUG: Wasn't $ITEM";
+			done;
+		done;
+		;;
+esac
 # If the package is not found, in the future we can offer to download it
+# If we're still running, we know what $upgfile is
+echo "[ INFO ] Initiating upgrade using file $upgfile"
+echo "[ INFO ] sha256sum: $( sha256sum ${upgdir}/${upgfile} | cut -d' ' -f1 )"
+/usr/local/bin/pause
 
 # Extract the file to the staging directory
+stgdir=/tmp/flek3s-upg-stage-$(date +%s)
+rm -rf /tmp/flek3s-upg-stage-*
+mkdir -p $stgdir && sayok || sayerror
+tar -xf ${upgdir}/${upgfile} -C ${stgdir}/ && sayok || sayerror
 
 # Run the update script
+if [ -f ${stgdir}/upgrade.sh ]; then 
+	echo "[ INFO ] Running upgrade script from staging directory"
+	${stgdir}/upgrade.sh && sayok || sayerror
+	/usr/local/bin/pause
+else
+	echo "[ ERROR ] Upgrade script not found in staging directory"
+	/usr/local/bin/pause
+	exit 1
+fi
 
-# Clean up the staging directory
+# Clean up the upgrade and staging directory
+#rm ${upgdir}/${upgfile}
+#rm -rf /tmp/flek3s-upg-stage-*
