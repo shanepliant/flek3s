@@ -53,7 +53,7 @@ fi
 getent passwd update > /dev/null 2>&1
 if [ $? -ne 0 ]; then 
 	echo "Adding update user..."
-	adduser -D --home /usr/src/flek3s update
+	adduser -D --home /usr/src/flek3s update -s /bin/false
 else
 	echo "update user already exists"
 fi

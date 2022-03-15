@@ -4,6 +4,7 @@ setup ALL=(ALL) NOPASSWD: /usr/local/bin/sshconfig
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/ntpconfig
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/initial-setup
 setup ALL=(ALL) NOPASSWD: /usr/local/bin/flek3s-setup
+setup ALL=(ALL) NOPASSWD: /usr/local/bin/flek3s-upgrade
 setup ALL=(ALL) PASSWD:   /sbin/reboot
 setup ALL=(ALL) PASSWD:   /sbin/poweroff
 setup ALL=(ALL) PASSWD:   /bin/su
