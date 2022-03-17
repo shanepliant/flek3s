@@ -9,7 +9,7 @@
 #  file permissions are set
 
 # Variables
-longhorn_version="1.2.0"
+longhorn_version="1.2.4"
 
 # Files:
 echo "Putting flek3s source files in place..."
