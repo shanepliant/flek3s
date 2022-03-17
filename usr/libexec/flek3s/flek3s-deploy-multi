@@ -655,7 +655,7 @@ for nodeid in 0 1 2; do
 	ssh ${user}@${ip} sudo mv issue /etc/ && sayok || sayerr
 	ssh ${user}@${ip} 'echo IP for this node is$(grep address /etc/network/interfaces | tr -s " " ) | sudo tee -a /etc/issue' && sayok || sayerr
 	ssh ${user}@${ip} 'echo " " | sudo tee -a /etc/issue' && sayok || sayerr
-	ssh ${user}@${ip} 'cat /etc/issue | sudo tee /dev/tty1 > /dev/null' && sayok || sayerr
+	ssh ${user}@${ip} 'cat /etc/issue | grep -v Kernel | sudo tee /dev/tty1 > /dev/null' && sayok || sayerr
 done
 
 echo ""
@@ -666,4 +666,3 @@ else
 fi
 echo ""
 
-/usr/local/bin/pause
