@@ -31,6 +31,15 @@ function validate_ip {
         fi
 }
 
+function countdown() {
+        ctr=$1
+        while [ $ctr -ne 0 ]; do
+                echo "$ctr"
+                sleep 1
+                ctr=$(expr $ctr - 1)
+        done
+}
+
 PROGRAM=$(basename "$0");
 function usage {
     echo "Usage: ./${PROGRAM} [PARAM-NAME PARAM-VALUE]"
@@ -380,7 +389,7 @@ for nodeid in 0 1 2; do
 		ssh ${user}@${ip} sudo chmod -R 666 /var/lib/etcd/cfssl && sayok || sayerr
 		ssh ${user}@${ip} sudo chmod +x /var/lib/etcd/cfssl && sayok || sayerr
 	fi
-
+	echo ">>> Configuring etcd on $hname / $ip"
 	cat > etcd.conf.yml << EOF11
 # This is the configuration file for the etcd server.
 
@@ -538,7 +547,7 @@ done
 
 echo""
 echo ">>> Waiting 30 seconds for etcd cluster to initialize..."
-sleep 30
+countdown 30
 
 echo ""
 echo ">>> Checking ETCD Cluster Members"
@@ -576,9 +585,11 @@ else
 		echo "cp /usr/libexec/k3s/k3s /usr/local/bin/; INSTALL_K3S_SKIP_DOWNLOAD=true /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik --write-kubeconfig-mode 644 --no-deploy traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem --token=${token}"  | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo chmod u+x /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo /usr/local/bin/k3s-redeploy  && sayok || sayerr
+		echo ">>> Staging K3s container images to $hname / $ip"
 		scp /usr/libexec/k3s/k3s-airgap-images-amd64.tar ${user}@${ip}:
 		ssh ${user}@${ip} sudo mv k3s-airgap-images-amd64.tar /usr/libexec/k3s/k3s-airgap-images-amd64.tar
 		ssh ${user}@${ip} sudo /usr/local/bin/ctr -n k8s.io -a /run/k3s/containerd/containerd.sock image import /usr/libexec/k3s/k3s-airgap-images-amd64.tar
+		echo ">>> Staging Longhorn container images to $hname / $ip"
 		scp /usr/src/longhorn/longhorn-images.tar ${user}@${ip}:
 		ssh ${user}@${ip} sudo mv longhorn-images.tar /usr/src/longhorn/longhorn-images.tar
 		ssh ${user}@${ip} sudo /usr/local/bin/ctr -n k8s.io -a /run/k3s/containerd/containerd.sock image import /usr/src/longhorn/longhorn-images.tar
@@ -586,7 +597,7 @@ else
 fi
 echo ""
 echo ">>> Waiting 30 seconds for all K3s nodes to be available"
-sleep 30
+countdown 30
 
 echo ""
 echo ">>> Checking node list in K3s cluster"
@@ -603,7 +614,9 @@ echo ""
 echo ""
 echo ">>> Deploying Longhorn on cluster"
 /usr/local/bin/kubectl apply -f /usr/src/longhorn/longhorn.yaml
-sleep 60
+
+echo ">>> Waiting 60 seconds for Longhorn to be ready"
+countdown 60
 
 echo ""
 echo ">>> Setting Longhorn as default storage class"
@@ -613,14 +626,6 @@ echo ">>> Setting Longhorn as default storage class"
 echo "" 
 echo ">>> Check default storage class"
 /usr/local/bin/kubectl get storageclass
-
-echo ""
-if [ "$upgrade" == "true" ]; then 
-	echo "End of K3s 3 Node Upgrade"
-else
-	echo "End of K3s 3 Node Installation"
-fi
-echo ""
 
 
 #########################
@@ -650,4 +655,15 @@ for nodeid in 0 1 2; do
 	ssh ${user}@${ip} sudo mv issue /etc/ && sayok || sayerr
 	ssh ${user}@${ip} 'echo IP for this node is$(grep address /etc/network/interfaces | tr -s " " ) | sudo tee -a /etc/issue' && sayok || sayerr
 	ssh ${user}@${ip} 'echo " " | sudo tee -a /etc/issue' && sayok || sayerr
+	ssh ${user}@${ip} 'cat /etc/issue | sudo tee /dev/tty1 > /dev/null' && sayok || sayerr
 done
+
+echo ""
+if [ "$upgrade" == "true" ]; then 
+	echo "End of K3s 3 Node Upgrade"
+else
+	echo "End of K3s 3 Node Installation"
+fi
+echo ""
+
+/usr/local/bin/pause
