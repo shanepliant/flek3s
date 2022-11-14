@@ -8,9 +8,6 @@
 #  user accounts are ready
 #  file permissions are set
 
-# Variables
-longhorn_version="1.2.4"
-
 # Files:
 echo "Putting flek3s source files in place..."
 script_dir=$(dirname "$BASH_SOURCE")
@@ -93,59 +90,9 @@ echo "Default user: setup" >> /etc/issue
 echo "Default password: changeme" >> /etc/issue
 echo "" >> /etc/issue
 
-# Pull files that are not ours and not available via apk
-echo "Getting latest k3s install script..."
-mkdir -p /usr/libexec/k3s
-curl -sfL https://get.k3s.io > /usr/libexec/k3s/install.sh
-chmod u+x /usr/libexec/k3s/install.sh
+bash ./stage-k3s-install.sh
 
-echo "Getting latest k3s executable..."
-GITHUB_URL=https://github.com/k3s-io/k3s/releases
-INSTALL_K3S_CHANNEL_URL=${INSTALL_K3S_CHANNEL_URL:-'https://update.k3s.io/v1-release/channels'}
-INSTALL_K3S_CHANNEL=${INSTALL_K3S_CHANNEL:-'stable'}
-version_url="${INSTALL_K3S_CHANNEL_URL}/${INSTALL_K3S_CHANNEL}"
-VERSION_K3S=$(curl -w '%{url_effective}' -L -s -S ${version_url} -o /dev/null | sed -e 's|.*/||')
-BIN_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s
-PACK_URL=${GITHUB_URL}/download/${VERSION_K3S}/k3s-airgap-images-amd64.tar
-curl -o /usr/libexec/k3s/k3s -sfL $BIN_URL 
-curl -o /usr/libexec/k3s/k3s-airgap-images-amd64.tar -sfL $PACK_URL 
-chmod +x /usr/libexec/k3s/k3s
-
-echo "Getting Longhorn YAML for version ${longhorn_version}..."
-mkdir -p /usr/src/longhorn
-curl -o /usr/src/longhorn/longhorn.yaml -sfL https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
-#rm /usr/src/longhorn/longhorn.yaml
-#wget -P /usr/src/longhorn/ https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn.yaml
-
-echo "Getting Longhorn images for version ${longhorn_version}..."
-wget https://raw.githubusercontent.com/longhorn/longhorn/v${longhorn_version}/deploy/longhorn-images.txt
-if [ -f "longhorn-images.txt" ]; then 
-
-	# get our tools
-	apk add docker
-	/etc/init.d/docker start
-	sleep 30
-
-	# images for longhorn-images.tar
-	imglist=""
-	for img in $(cat longhorn-images.txt); do 
-		echo "Image $img"
-		docker pull $img
-		imglist="${img} ${imglist}"
-	done
-
-	echo "saving compressed images"
-	docker save $imglist > /usr/src/longhorn/longhorn-images.tar
-
-	# cleanup docker
-	docker rmi $(docker images -q)
-	/etc/init.d/docker stop
-	apk del docker
-	rm longhorn-images.txt
-else
-	echo "[ ERROR ] longhorn-images.txt file not found. Cannot stage images without the list"
-	exit 1
-fi
+bash ./stage-longhorn-install.sh
 
 echo "Update branding"
 sed -i /boot/extlinux.conf -e "s_AUTOBOOT Alpine_AUTOBOOT flek3s/Alpine_"
