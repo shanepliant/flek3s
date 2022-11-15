@@ -9,8 +9,8 @@ if [ "$cont" == yes ]; then
 	echo " Continuing with factory-reset"
 	rc-update del etcd
 	rc-update del k3s
-	rm /etc/init.d/etcd
 	rm /etc/init.d/k3s
+	/usr/local/bin/k3s-uninstall.sh
 	rm -r /var/lib/rancher
 	rm -r /var/lib/etcd/*
 else
