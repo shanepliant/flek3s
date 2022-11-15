@@ -25,6 +25,11 @@ chown setup:root configshell
 chmod +x pause validate_ip mask2cidr cidr2mask
 cd -
 
+cd /usr/libexec/flek3s
+chown root:root *
+chmod 700 *
+cd -
+
 # Set up the .ssh directory for the peer user
 mkdir -p /home/peer/.ssh
 chown peer:peer /home/peer/.ssh

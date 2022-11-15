@@ -582,17 +582,17 @@ else
 		user=$(eval echo \$node${nodeid}_user)
 		echo ""
 		echo ">>> Deploying K3s to $hname / $ip"
-		echo "cp /usr/libexec/k3s/k3s /usr/local/bin/; INSTALL_K3S_SKIP_DOWNLOAD=true /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --no-deploy traefik --write-kubeconfig-mode 644 --no-deploy traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem --token=${token}"  | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
+		echo "cp /usr/libexec/k3s/k3s /usr/local/bin/; INSTALL_K3S_SKIP_DOWNLOAD=true /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --disable traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem --token=${token}"  | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo chmod u+x /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo /usr/local/bin/k3s-redeploy  && sayok || sayerr
 		echo ">>> Staging K3s container images to $hname / $ip"
 		scp /usr/libexec/k3s/k3s-airgap-images-amd64.tar ${user}@${ip}:
 		ssh ${user}@${ip} sudo mv k3s-airgap-images-amd64.tar /usr/libexec/k3s/k3s-airgap-images-amd64.tar
-		ssh ${user}@${ip} sudo /usr/local/bin/ctr -n k8s.io -a /run/k3s/containerd/containerd.sock image import /usr/libexec/k3s/k3s-airgap-images-amd64.tar
+		ssh ${user}@${ip} sudo /usr/local/bin/ctr -n k8s.io -a /run/k3s/containerd/containerd.sock image import /usr/libexec/k3s/k3s-airgap-images-amd64.tar  && sayok || sayerr
 		echo ">>> Staging Longhorn container images to $hname / $ip"
 		scp /usr/src/longhorn/longhorn-images.tar ${user}@${ip}:
 		ssh ${user}@${ip} sudo mv longhorn-images.tar /usr/src/longhorn/longhorn-images.tar
-		ssh ${user}@${ip} sudo /usr/local/bin/ctr -n k8s.io -a /run/k3s/containerd/containerd.sock image import /usr/src/longhorn/longhorn-images.tar
+		ssh ${user}@${ip} sudo /usr/local/bin/ctr -n k8s.io -a /run/k3s/containerd/containerd.sock image import /usr/src/longhorn/longhorn-images.tar  && sayok || sayerr
 	done
 fi
 echo ""
@@ -601,7 +601,7 @@ countdown 30
 
 echo ""
 echo ">>> Checking node list in K3s cluster"
-/usr/local/bin/kubectl get nodes
+/usr/local/bin/kubectl get nodes  && sayok || sayerr
 echo ""
 
 

@@ -17,4 +17,4 @@ bash ./stage-longhorn-install.sh
 
 # Pack it up
 
-tar -czvf flek3s-upgrade-$(cat ./VERSION).tar.gz /usr/src/alpine /usr/src/longhorn /usr/libexec/k3s etc/apk etc/sudoers.d etc/local.d usr/local/bin usr/libexec/flek3s
+tar -czvf flek3s-upgrade-$(cat ./VERSION).tar.gz /usr/src/alpine /usr/src/longhorn /usr/libexec/k3s etc/apk etc/sudoers.d etc/local.d usr/local/bin usr/libexec/flek3s VERSION upgrade-run.sh
