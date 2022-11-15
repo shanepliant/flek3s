@@ -13,6 +13,27 @@ echo "Beginning flek3s upgrade process"
  apk add --allow-untrusted $(ls *.apk) 
  cd -
 
+# Fix file permissions
+# File permissions:
+# should be root:root 700 unless specified here
+# /usr/local/bin
+echo "Adjusting default file permissions..."
+cd /usr/local/bin/
+chown root:root *
+chmod 700 *
+chown setup:root configshell
+chmod +x pause validate_ip mask2cidr cidr2mask
+cd -
+
+# Set up the .ssh directory for the peer user
+mkdir -p /home/peer/.ssh
+chown peer:peer /home/peer/.ssh
+
+# /usr/libexec/flek3s
+chown root:root /usr/libexec/flek3s/*
+chmod 700 /usr/libexec/flek3s/*
+
+
 # IF K3s is installed, upgrade it
 k3s --version >/dev/null 2>&1 && k3s_installed=1 || k3s_installed=0
 if [ $k3s_installed -eq 1 ]; then 
