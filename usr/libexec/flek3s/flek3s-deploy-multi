@@ -547,7 +547,7 @@ done
 
 echo""
 echo ">>> Waiting 30 seconds for etcd cluster to initialize..."
-countdown 30
+countdown 15
 
 echo ""
 echo ">>> Checking ETCD Cluster Members"
@@ -585,6 +585,7 @@ else
 		echo "cp /usr/libexec/k3s/k3s /usr/local/bin/; INSTALL_K3S_SKIP_DOWNLOAD=true /usr/libexec/k3s/install.sh --write-kubeconfig-mode 644 --disable traefik --datastore-endpoint=\"${endpoints}\" --datastore-cafile=/var/lib/etcd/cfssl/ca.pem --datastore-certfile=/var/lib/etcd/cfssl/client.pem --datastore-keyfile=/var/lib/etcd/cfssl/client-key.pem --token=${token}"  | ssh ${user}@${ip} sudo tee /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo chmod u+x /usr/local/bin/k3s-redeploy
 		ssh ${user}@${ip} sudo /usr/local/bin/k3s-redeploy  && sayok || sayerr
+		countdown 10
 		echo ">>> Staging K3s container images to $hname / $ip"
 		scp /usr/libexec/k3s/k3s-airgap-images-amd64.tar ${user}@${ip}:
 		ssh ${user}@${ip} sudo mv k3s-airgap-images-amd64.tar /usr/libexec/k3s/k3s-airgap-images-amd64.tar
