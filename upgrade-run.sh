@@ -38,6 +38,9 @@ chown peer:peer /home/peer/.ssh
 chown root:root /usr/libexec/flek3s/*
 chmod 700 /usr/libexec/flek3s/*
 
+chmod +x /usr/libexec/k3s/k3s
+
+exit
 
 # IF K3s is installed, upgrade it
 k3s --version >/dev/null 2>&1 && k3s_installed=1 || k3s_installed=0
