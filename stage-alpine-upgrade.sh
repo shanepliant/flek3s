@@ -6,5 +6,5 @@ apk cache download
 apk cache -v sync
 apk --update-cache upgrade
 mkdir -p /usr/src/alpine
-tar -czvf /usr/src/alpine/apks.tar.gz
+tar -czvf /usr/src/alpine/apks.tar.gz /var/cache/apk
 
